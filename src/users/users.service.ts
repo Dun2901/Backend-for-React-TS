@@ -38,6 +38,16 @@ export class UsersService {
     return await this.userModel.findById(id);
   }
 
+  async findOneByUsername(username: string) {
+    return await this.userModel.findOne({
+      email: username,
+    });
+  }
+
+  isValidPassword = (password: string, hash: string) => {
+    return bcrypt.compareSync(password, hash);
+  };
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     return await this.userModel.updateOne({ _id: id }, { ...updateUserDto });
   }
