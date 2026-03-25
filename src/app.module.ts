@@ -16,7 +16,7 @@ import { AuthModule } from './auth/auth.module';
       inject: [ConfigService],
     }),
 
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
 
     UsersModule,
 
