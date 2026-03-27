@@ -5,11 +5,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
+    UsersModule,
+    AuthModule,
+
+    ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -17,12 +19,6 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
       }),
       inject: [ConfigService],
     }),
-
-    ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
-
-    UsersModule,
-
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [
