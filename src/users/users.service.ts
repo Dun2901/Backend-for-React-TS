@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, RegisterUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -50,6 +50,25 @@ export class UsersService {
   isValidPassword = (password: string, hash: string) => {
     return bcrypt.compareSync(password, hash);
   };
+
+  async register(user: RegisterUserDto) {
+    const { fullName, email, password, phone } = user;
+    // Check email exist
+    // const isExist = await this.userModel.findOne({ email });
+    // if (isExist) {
+    //   throw new BadRequestException(`Email ${email} already used`);
+    // }
+
+    const hashPassword = this.getHashPassword(password);
+    const newRegister = await this.userModel.create({
+      fullName,
+      email,
+      password: hashPassword,
+      phone,
+    });
+
+    return newRegister;
+  }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     return await this.userModel.updateOne({ _id: id }, { ...updateUserDto });

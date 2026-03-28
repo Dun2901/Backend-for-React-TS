@@ -11,3 +11,18 @@ export class CreateUserDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class RegisterUserDto {
+  @IsNotEmpty({ message: 'fullName không được để trống' })
+  fullName: string;
+
+  @IsEmail({}, { message: 'Email không đúng định dạng' })
+  @IsNotEmpty({ message: 'Email không được để trống' })
+  email: string;
+
+  @IsNotEmpty({ message: 'Password không được để trống' })
+  password: string;
+
+  @IsNotEmpty({ message: 'Phone không được để trống' })
+  phone: number;
+}

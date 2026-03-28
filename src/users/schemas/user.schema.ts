@@ -15,7 +15,7 @@ export class User {
   email: string;
 
   @Prop()
-  phone: string;
+  phone: number;
 
   @Prop()
   role: string;
