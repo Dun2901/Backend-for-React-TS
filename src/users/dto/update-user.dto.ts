@@ -1,6 +1,12 @@
-import { OmitType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
-export class UpdateUserDto extends OmitType(CreateUserDto, [
-  'password',
-] as const) {}
+export class UpdateUserDto {
+  @IsNotEmpty({ message: 'fullName không được để trống' })
+  fullName: string;
+
+  @IsNotEmpty({ message: 'phone không được để trống' })
+  phone: string;
+
+  @IsOptional()
+  avatar: string;
+}

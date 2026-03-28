@@ -1,6 +1,7 @@
 import { RegisterUserDto } from '@/users/dto/create-user.dto';
+import { IUser } from '@/users/users.interface';
 import { UsersService } from '@/users/users.service';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -20,16 +21,25 @@ export class AuthService {
       }
     }
 
-    return null;
+    throw new BadRequestException('Thông tin đăng nhập không chính xác');
   }
 
-  async login(user: any) {
+  async login(user: IUser) {
+    const { _id, email, fullName, role } = user;
     const payload = {
-      username: user.email,
-      sub: user._id,
+      sub: 'token login',
+      iss: 'from server',
+      _id,
+      fullName,
+      email,
+      role,
     };
     return {
       access_token: this.jwtService.sign(payload),
+      _id,
+      fullName,
+      email,
+      role,
     };
   }
 
