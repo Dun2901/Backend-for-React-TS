@@ -11,6 +11,8 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from '@/decorator/customize';
+import type { IUser } from './users.interface';
 
 @Controller('users')
 export class UsersController {
@@ -37,7 +39,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req) {
-    return this.usersService.remove(id, req.user.userId);
+  remove(@Param('id') id: string, @User() user: IUser) {
+    return this.usersService.remove(id, user._id);
   }
 }

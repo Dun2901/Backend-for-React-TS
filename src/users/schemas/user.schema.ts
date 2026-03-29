@@ -17,17 +17,17 @@ export class User {
   @Prop()
   phone: number;
 
-  @Prop()
+  @Prop({ default: 'USER' })
   role: string;
 
   @Prop()
   avatar: string;
 
-  @Prop()
+  @Prop({ default: false })
   isActive: boolean;
 
-  @Prop()
-  type: string;
+  @Prop({ default: 'LOCAL' })
+  accountType: string;
 
   @Prop()
   createdAt: Date;
