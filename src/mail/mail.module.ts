@@ -23,11 +23,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         defaults: {
           from: `"No Reply" ${configService.get<string>('MAIL_USER')} `,
         },
-        // template: {
-        //   dir: __dirname + '/templates',
-        //   adapter: new HandlebarsAdapter(),
-        //   options: { strict: true },
-        // },
+        template: {
+          dir: __dirname + '/templates',
+          adapter: new HandlebarsAdapter(),
+          options: { strict: true },
+        },
       }),
     }),
   ],
