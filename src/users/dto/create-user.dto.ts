@@ -10,6 +10,15 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   password: string;
+
+  @IsNotEmpty()
+  phone: number;
+
+  @IsNotEmpty()
+  role: string;
+
+  @IsNotEmpty()
+  avatar: string;
 }
 
 export class RegisterUserDto {

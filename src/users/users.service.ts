@@ -6,6 +6,8 @@ import { User, UserDocument } from './schemas/user.schema';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
+import { v4 as uuidv4 } from 'uuid';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class UsersService {
@@ -51,23 +53,34 @@ export class UsersService {
     return bcrypt.compareSync(password, hash);
   };
 
-  async register(user: RegisterUserDto) {
-    const { fullName, email, password, phone } = user;
-    // Check email exist
-    // const isExist = await this.userModel.findOne({ email });
-    // if (isExist) {
-    //   throw new BadRequestException(`Email ${email} already used`);
-    // }
+  async register(registerUserDto: RegisterUserDto) {
+    const { fullName, email, password, phone } = registerUserDto;
 
+    // Check email exist
+    const isExist = await this.userModel.findOne({ email });
+    if (isExist) {
+      throw new BadRequestException(
+        'Email đã tồn tại, vui lòng sử dụng email khác',
+      );
+    }
+
+    // Hash password
     const hashPassword = this.getHashPassword(password);
     const newRegister = await this.userModel.create({
       fullName,
       email,
       password: hashPassword,
       phone,
+      isActive: false,
+      codeId: uuidv4(),
+      codeExpired: dayjs().add(1, 'minutes').toDate(),
     });
 
-    return newRegister;
+    // Trả ra phản hồi
+
+    // Send email
+
+    return { _id: newRegister._id };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

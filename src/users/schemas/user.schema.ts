@@ -30,6 +30,12 @@ export class User {
   accountType: string;
 
   @Prop()
+  codeId: string;
+
+  @Prop()
+  codeExpired: Date;
+
+  @Prop()
   createdAt: Date;
 
   @Prop()
