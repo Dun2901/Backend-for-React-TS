@@ -6,16 +6,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import MongooseDelete from 'mongoose-delete';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
+    MailModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URL'),
         // Thêm global plugin
         connectionFactory: (connection) => {
