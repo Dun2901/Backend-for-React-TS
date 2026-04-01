@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <meta charset='UTF-8' />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+      }
+      .container {
+        max-width: 500px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 8px;
+        padding: 32px;
+      }
+      .code {
+        font-size: 32px;
+        font-weight: bold;
+        letter-spacing: 8px;
+        color: #4f46e5;
+        text-align: center;
+        margin: 24px 0;
+      }
+      .footer {
+        color: #888;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h2>Xin chào, {{name}}!</h2>
+      <p>Cảm ơn bạn đã đăng ký. Vui lòng dùng mã bên dưới để xác thực tài khoản:</p>
+      <div class='code'>{{code}}</div>
+      <p>Mã này sẽ hết hạn sau <strong>{{expiredIn}}</strong>.</p>
+      <p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
+      <div class='footer'>© 2024 Your App. All rights reserved.</div>
+    </div>
+  </body>
+</html>

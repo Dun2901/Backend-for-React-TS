@@ -17,7 +17,12 @@ export class MailController {
       to: 'dun29012003@gmail.com',
       from: '"Support Team" <support@example.com>', // override default from
       subject: 'Welcome to Nice App! Confirm your Email',
-      template: 'test.hbs',
+      template: 'register.hbs',
+      context: {
+        name: 'Dung',
+        activationCode: 1234,
+      },
     });
+    return 'ok';
   }
 }

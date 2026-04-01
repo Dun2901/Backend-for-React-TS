@@ -8,11 +8,13 @@ import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
+    private mailService: MailService,
   ) {}
 
   getHashPassword = (password: string) => {
@@ -76,10 +78,16 @@ export class UsersService {
       codeExpired: dayjs().add(1, 'minutes').toDate(),
     });
 
-    // Trả ra phản hồi
-
     // Send email
+    this.mailService
+      .sendVerificationEmail({
+        email: newRegister.email,
+        fullName: newRegister.fullName,
+        codeId: newRegister.codeId,
+      })
+      .catch((err) => console.error('Send mail failed:', err));
 
+    // Trả ra phản hồi
     return { _id: newRegister._id };
   }
 
