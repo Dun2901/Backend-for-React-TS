@@ -19,7 +19,7 @@ export class MailService {
       context: {
         name: user.fullName,
         code: user.codeId,
-        expiredIn: '1 phút',
+        expiredIn: '5 phút',
       },
     });
   }

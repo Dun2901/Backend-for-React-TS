@@ -1,4 +1,4 @@
-import { RegisterUserDto } from '@/users/dto/create-user.dto';
+import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
 import { IUser } from '@/users/users.interface';
 import { UsersService } from '@/users/users.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
@@ -45,5 +45,13 @@ export class AuthService {
 
   async register(registerUserDto: RegisterUserDto) {
     return await this.usersService.register(registerUserDto);
+  }
+
+  async verifyCode(verifyCodeDto: VerifyCodeDto) {
+    return await this.usersService.activateAccount(verifyCodeDto);
+  }
+
+  async resendVerifyCode(email: string) {
+    return await this.usersService.resendVerifyCode(email);
   }
 }
