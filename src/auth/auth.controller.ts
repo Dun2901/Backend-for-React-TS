@@ -29,6 +29,7 @@ export class AuthController {
 
   @Public()
   @Post('/register')
+  @ResponseMessage('Register a new user')
   handleRegister(@Body() registerUserDto: RegisterUserDto) {
     return this.authService.register(registerUserDto);
   }

@@ -19,9 +19,9 @@ import ms from 'ms';
         global: true,
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: ms(
-            configService.get('JWT_ACCESS_EXPIRE') as ms.StringValue,
-          ),
+          expiresIn: configService.get<string>(
+            'JWT_ACCESS_EXPIRE',
+          ) as ms.StringValue,
         },
       }),
       inject: [ConfigService],

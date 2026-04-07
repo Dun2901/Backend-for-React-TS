@@ -7,12 +7,14 @@ import {
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailService } from '@/mail/mail.service';
+import { IUser } from './users.interface';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class UsersService {
@@ -27,18 +29,68 @@ export class UsersService {
     return hash;
   };
 
-  async create(createUserDto: CreateUserDto) {
+  isValidPassword = (password: string, hash: string) => {
+    return bcrypt.compareSync(password, hash);
+  };
+
+  async create(createUserDto: CreateUserDto, user: IUser) {
+    // Check email exist
+    const isExist = await this.userModel.findOne({
+      email: createUserDto.email,
+    });
+    if (isExist) {
+      throw new BadRequestException(
+        'Email đã tồn tại, vui lòng sử dụng email khác',
+      );
+    }
+
     const hashPassword = this.getHashPassword(createUserDto.password);
 
-    const user = await this.userModel.create({
+    const newUser = await this.userModel.create({
       ...createUserDto,
+      isActive: true,
       password: hashPassword,
+      createdBy: {
+        _id: user._id,
+        email: user.email,
+      },
     });
-    return user;
+
+    return {
+      _id: newUser._id,
+      createdAt: newUser.createdAt,
+    };
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(currentPage: number, limit: number, qs: string) {
+    const { filter, sort, population, projection } = aqp(qs);
+    delete filter.current;
+    delete filter.pageSize;
+
+    const offset = (+currentPage - 1) * +limit;
+    const defaultLimit = +limit ? +limit : 10;
+
+    const totalItems = (await this.userModel.find(filter)).length;
+    const totalPages = Math.ceil(totalItems / defaultLimit);
+
+    const result = await this.userModel
+      .find(filter)
+      .skip(offset)
+      .limit(defaultLimit)
+      .sort(sort as any)
+      .select('-password')
+      .populate(population)
+      .exec();
+
+    return {
+      meta: {
+        current: currentPage, //trang hiện tại
+        pageSize: limit, //số lượng bản ghi đã lấy
+        pages: totalPages, //tổng số trang với điều kiện query
+        total: totalItems, // tổng số phần tử (số bản ghi)
+      },
+      result, //kết quả query
+    };
   }
 
   async findOne(id: string) {
@@ -46,7 +98,7 @@ export class UsersService {
       throw new BadRequestException('Not a valid ObjectId!');
     }
 
-    return await this.userModel.findById(id);
+    return await this.userModel.findById(id).select('-password'); // "-" is remove field
   }
 
   async findOneByUsername(username: string) {
@@ -55,9 +107,26 @@ export class UsersService {
     });
   }
 
-  isValidPassword = (password: string, hash: string) => {
-    return bcrypt.compareSync(password, hash);
-  };
+  async update(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+    return await this.userModel.updateOne(
+      { _id: id },
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
+    );
+  }
+
+  async remove(id: string, deletedBy?: mongoose.Schema.Types.ObjectId) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    return await this.userModel.delete({ _id: id }, deletedBy);
+  }
 
   async register(registerUserDto: RegisterUserDto) {
     const { fullName, email, password, phone } = registerUserDto;
@@ -92,27 +161,10 @@ export class UsersService {
       .catch((err) => console.error('Gửi mail không thành công:', err));
 
     // Trả ra phản hồi
-    return { _id: newRegister._id };
-  }
-
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    return await this.userModel.updateOne({ _id: id }, { ...updateUserDto });
-  }
-
-  // async remove(id: string) {
-  //   if (!mongoose.Types.ObjectId.isValid(id)) {
-  //     throw new BadRequestException('Not a valid ObjectId!');
-  //   }
-
-  //   return await this.userModel.deleteOne({ _id: id });
-  // }
-
-  async remove(id: string, deletedBy?: string) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Not a valid ObjectId!');
-    }
-
-    return await this.userModel.delete({ _id: id }, deletedBy);
+    return {
+      _id: newRegister._id,
+      createdAt: newRegister.createdAt,
+    };
   }
 
   async activateAccount(verifyCodeDto: VerifyCodeDto) {
