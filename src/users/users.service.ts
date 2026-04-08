@@ -7,7 +7,7 @@ import {
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
@@ -166,6 +166,18 @@ export class UsersService {
       createdAt: newRegister.createdAt,
     };
   }
+
+  updateUserToken = async (
+    refreshToken: string,
+    _id: mongoose.Schema.Types.ObjectId,
+  ) => {
+    return await this.userModel.updateOne(
+      { _id },
+      {
+        refreshToken,
+      },
+    );
+  };
 
   async activateAccount(verifyCodeDto: VerifyCodeDto) {
     const { _id, codeId } = verifyCodeDto;
