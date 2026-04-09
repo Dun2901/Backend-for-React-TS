@@ -75,6 +75,67 @@ export class AuthService {
     return refresh_token;
   };
 
+  processNewToken = async (refreshToken: string, response: Response) => {
+    try {
+      this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+
+      const user = await this.usersService.findUserByToken(refreshToken);
+      if (user) {
+        const { _id, email, fullName, role } = user;
+        const payload = {
+          sub: 'token refresh',
+          iss: 'from server',
+          _id,
+          fullName,
+          email,
+          role,
+        };
+
+        const refresh_token = this.createRefreshToken(payload);
+
+        // Update user with refresh_token
+        await this.usersService.updateUserToken(refresh_token, _id.toString());
+
+        // Set refresh_token as cookies
+        response.clearCookie('refresh_token');
+        response.cookie('refresh_token', refresh_token, {
+          httpOnly: true,
+          maxAge: ms(
+            this.configService.get<string>(
+              'JWT_REFRESH_EXPIRE',
+            ) as ms.StringValue,
+          ),
+        });
+
+        return {
+          access_token: this.jwtService.sign(payload),
+          user: {
+            _id,
+            fullName,
+            email,
+            role,
+          },
+        };
+      } else {
+        throw new BadRequestException(
+          'Không tồn tại refresh_token ở database. Please do login again.',
+        );
+      }
+    } catch (error) {
+      throw new BadRequestException(
+        'Refresh token không hợp lệ. Vui lòng login.',
+      );
+    }
+  };
+
+  logout = async (user: IUser, response: Response) => {
+    await this.usersService.updateUserToken('', user.email);
+    response.clearCookie('refresh_token');
+    return 'ok';
+  };
+
   async verifyCode(verifyCodeDto: VerifyCodeDto) {
     return await this.usersService.activateAccount(verifyCodeDto);
   }

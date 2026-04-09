@@ -3,7 +3,7 @@ import {
   Controller,
   Get,
   Post,
-  Request,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -12,7 +12,7 @@ import { AuthService } from './auth.service';
 import { Public, ResponseMessage, User } from '@/decorator/customize';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import type { IUser } from '@/users/users.interface';
 
 @Controller('auth')
@@ -26,7 +26,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @ResponseMessage('User login')
-  handleLogin(@Request() req, @Res({ passthrough: true }) response: Response) {
+  handleLogin(@Req() req, @Res({ passthrough: true }) response: Response) {
     return this.authService.login(req.user, response);
   }
 
@@ -41,6 +41,27 @@ export class AuthController {
   @ResponseMessage('Get user information')
   handleGetAccount(@User() user: IUser) {
     return { user };
+  }
+
+  @Public()
+  @Get('/refresh')
+  @ResponseMessage('Get user refresh token')
+  handleRefreshToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken = request.cookies['refresh_token'] as string;
+
+    return this.authService.processNewToken(refreshToken, response);
+  }
+
+  @Post('/logout')
+  @ResponseMessage('Logout User')
+  handleLogout(
+    @User() user: IUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.logout(user, response);
   }
 
   @Public()

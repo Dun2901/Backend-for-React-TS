@@ -51,7 +51,7 @@ export class UsersService {
       isActive: true,
       password: hashPassword,
       createdBy: {
-        _id: user._id,
+        _id: user._id as any,
         email: user.email,
       },
     });
@@ -120,7 +120,7 @@ export class UsersService {
     );
   }
 
-  async remove(id: string, deletedBy?: mongoose.Schema.Types.ObjectId) {
+  async remove(id: string, deletedBy?: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Not a valid ObjectId!');
     }
@@ -167,16 +167,21 @@ export class UsersService {
     };
   }
 
-  updateUserToken = async (
-    refreshToken: string,
-    _id: mongoose.Schema.Types.ObjectId,
-  ) => {
+  updateUserToken = async (refreshToken: string, _id: string) => {
     return await this.userModel.updateOne(
       { _id },
       {
         refreshToken,
       },
     );
+  };
+
+  findUserByToken = async (refreshToken: string) => {
+    return await this.userModel
+      .findOne({
+        refreshToken,
+      })
+      .select('-password');
   };
 
   async activateAccount(verifyCodeDto: VerifyCodeDto) {
