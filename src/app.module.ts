@@ -7,12 +7,14 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import MongooseDelete from 'mongoose-delete';
 import { MailModule } from './mail/mail.module';
+import { DatabasesModule } from './databases/databases.module';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
     MailModule,
+    DatabasesModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
