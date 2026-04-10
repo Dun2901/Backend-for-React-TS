@@ -78,7 +78,7 @@ export class UsersService {
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
-      .select('-password')
+      .select(['-password', '-refreshToken'])
       .populate(population)
       .exec();
 
