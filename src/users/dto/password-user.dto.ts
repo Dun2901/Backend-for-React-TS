@@ -22,11 +22,10 @@ export class ResetPasswordDto {
   confirmPassword: string;
 }
 
-// export class ChangePasswordDto {
-//   @IsString()
-//   oldPassword: string;
+export class ChangePasswordDto {
+  @IsNotEmpty({ message: 'oldPassword không được để trống' })
+  oldPassword: string;
 
-//   @IsString()
-//   @MinLength(6)
-//   newPassword: string;
-// }
+  @IsNotEmpty({ message: 'newPassword không được để trống' })
+  newPassword: string;
+}

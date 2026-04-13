@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   CreateUserDto,
   RegisterUserDto,
@@ -15,7 +20,11 @@ import dayjs from 'dayjs';
 import { MailService } from '@/mail/mail.service';
 import { IUser } from './users.interface';
 import aqp from 'api-query-params';
-import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/password-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -24,15 +33,13 @@ export class UsersService {
     private mailService: MailService,
   ) {}
 
-  getHashPassword = (password: string) => {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
-    return hash;
-  };
+  async getHashPassword(password: string) {
+    return await bcrypt.hash(password, 10);
+  }
 
-  isValidPassword = (password: string, hash: string) => {
-    return bcrypt.compareSync(password, hash);
-  };
+  async isValidPassword(password: string, hash: string) {
+    return await bcrypt.compare(password, hash);
+  }
 
   async create(createUserDto: CreateUserDto, user: IUser) {
     // Check email exist
@@ -45,7 +52,7 @@ export class UsersService {
       );
     }
 
-    const hashPassword = this.getHashPassword(createUserDto.password);
+    const hashPassword = await this.getHashPassword(createUserDto.password);
 
     const newUser = await this.userModel.create({
       ...createUserDto,
@@ -141,7 +148,7 @@ export class UsersService {
     }
 
     // Hash password
-    const hashPassword = this.getHashPassword(password);
+    const hashPassword = await this.getHashPassword(password);
     const newRegister = await this.userModel.create({
       fullName,
       email,
@@ -251,6 +258,30 @@ export class UsersService {
       .catch((err) => console.error('Resend mail failed:', err));
 
     return { _id: user._id };
+  }
+
+  async changePassword(changePasswordDto: ChangePasswordDto, user: IUser) {
+    const { oldPassword, newPassword } = changePasswordDto;
+
+    // Find user
+    const foundUser = await this.userModel.findById(user._id);
+    if (!foundUser) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    // So sánh pass cũ với pass trong DB
+    const passwordMatch = await bcrypt.compare(oldPassword, foundUser.password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng');
+    }
+
+    // Update user password (hash password)
+    const newHashedPassword = await this.getHashPassword(newPassword);
+    await this.userModel.updateOne(
+      { _id: user._id },
+      { password: newHashedPassword, passwordChangeAt: new Date() },
+    );
+    return 'ok';
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {

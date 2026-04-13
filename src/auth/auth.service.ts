@@ -1,5 +1,6 @@
 import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
 import {
+  ChangePasswordDto,
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '@/users/dto/password-user.dto';
@@ -23,7 +24,10 @@ export class AuthService {
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByUsername(username);
     if (user) {
-      const isValid = this.usersService.isValidPassword(pass, user?.password);
+      const isValid = await this.usersService.isValidPassword(
+        pass,
+        user?.password,
+      );
       if (isValid === true) {
         return user;
       }
@@ -146,6 +150,10 @@ export class AuthService {
 
   async resendVerifyCode(email: string) {
     return await this.usersService.resendVerifyCode(email);
+  }
+
+  async changePassword(changePasswordDto: ChangePasswordDto, user: IUser) {
+    return await this.usersService.changePassword(changePasswordDto, user);
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {

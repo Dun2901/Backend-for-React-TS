@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
@@ -15,6 +16,7 @@ import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
 import type { IUser } from '@/users/users.interface';
 import {
+  ChangePasswordDto,
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '@/users/dto/password-user.dto';
@@ -80,6 +82,15 @@ export class AuthController {
   @ResponseMessage('Resend verify code')
   resendVerifyCode(@Body('email') email: string) {
     return this.authService.resendVerifyCode(email);
+  }
+
+  @Patch('/change-password')
+  @ResponseMessage('Change password')
+  changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @User() user: IUser,
+  ) {
+    return this.authService.changePassword(changePasswordDto, user);
   }
 
   @Public()
