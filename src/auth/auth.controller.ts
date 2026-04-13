@@ -14,6 +14,10 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
 import type { IUser } from '@/users/users.interface';
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from '@/users/dto/password-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -66,13 +70,29 @@ export class AuthController {
 
   @Public()
   @Post('/verify-code')
+  @ResponseMessage('Verify code')
   verifyCode(@Body() verifyCodeDto: VerifyCodeDto) {
     return this.authService.verifyCode(verifyCodeDto);
   }
 
   @Public()
   @Post('/resend-code')
+  @ResponseMessage('Resend verify code')
   resendVerifyCode(@Body('email') email: string) {
     return this.authService.resendVerifyCode(email);
+  }
+
+  @Public()
+  @Post('/forgot-password')
+  @ResponseMessage('Send reset password email')
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Public()
+  @Post('/reset-password')
+  @ResponseMessage('Reset password')
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 }

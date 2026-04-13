@@ -17,7 +17,20 @@ export class MailService {
       subject: 'Xác thực tài khoản của bạn',
       template: 'verify-email', // templates/verify-email.hbs
       context: {
-        name: user.fullName,
+        name: user?.fullName ?? user.email,
+        code: user.codeId,
+        expiredIn: '5 phút',
+      },
+    });
+  }
+
+  async sendResetPasswordEmail(user: ISendMailPayload) {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Đặt lại mật khẩu của bạn',
+      template: 'reset-password', // templates/reset-password.hbs
+      context: {
+        name: user?.fullName ?? user.email,
         code: user.codeId,
         expiredIn: '5 phút',
       },

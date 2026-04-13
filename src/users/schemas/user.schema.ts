@@ -36,6 +36,15 @@ export class User {
   codeExpired: Date;
 
   @Prop()
+  passwordResetToken: string;
+
+  @Prop()
+  passwordResetExpired: Date;
+
+  @Prop()
+  passwordChangeAt: Date;
+
+  @Prop()
   refreshToken: string;
 
   @Prop({ type: Object })
@@ -55,6 +64,7 @@ export class User {
 
   @Prop()
   updatedAt: Date;
+  // createdAt, updatedAt, _id => có timestamps: true thì 3 field này mongoose tự thêm
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

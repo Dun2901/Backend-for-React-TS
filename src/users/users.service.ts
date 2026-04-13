@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { MailService } from '@/mail/mail.service';
 import { IUser } from './users.interface';
 import aqp from 'api-query-params';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -250,5 +251,79 @@ export class UsersService {
       .catch((err) => console.error('Resend mail failed:', err));
 
     return { _id: user._id };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto;
+    // Check mail
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('Tài khoản không hợp lệ');
+    }
+
+    // Tạo code mới
+    const newCode = uuidv4();
+    const newExpired = dayjs().add(5, 'minutes').toDate();
+
+    // Update user
+    await this.userModel.updateOne(
+      { email },
+      { passwordResetToken: newCode, passwordResetExpired: newExpired },
+    );
+
+    // send email
+    this.mailService
+      .sendResetPasswordEmail({
+        email: user.email,
+        fullName: user.fullName,
+        codeId: newCode,
+      })
+      .catch((err) => console.error('Resend mail failed:', err));
+
+    return { _id: user._id, email: user.email };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { email, newPassword, confirmPassword, codeId } = resetPasswordDto;
+
+    // Check confirm password
+    if (confirmPassword !== newPassword) {
+      throw new BadRequestException(
+        'Mật khẩu/Xác nhận mật khẩu không chính xác.',
+      );
+    }
+
+    // Check mail
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Tài khoản không hợp lệ');
+    }
+
+    // Check code hợp lệ
+    const isValidCode = user.passwordResetToken === codeId;
+
+    // Check còn hạn
+    const isNotExpired = dayjs().isBefore(user.passwordResetExpired);
+
+    if (!isValidCode || !isNotExpired) {
+      throw new BadRequestException(
+        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
+      );
+    }
+
+    // Update password
+    const hashPassword = this.getHashPassword(newPassword);
+    await this.userModel.updateOne(
+      { email },
+      {
+        password: hashPassword,
+        passwordResetToken: null,
+        passwordResetExpired: null,
+        passwordChangeAt: new Date(),
+      },
+    );
+
+    return { isNotExpired };
   }
 }
