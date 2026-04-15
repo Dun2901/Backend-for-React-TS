@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import MongooseDelete from 'mongoose-delete';
 import { MailModule } from './mail/mail.module';
 import { DatabasesModule } from './databases/databases.module';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DatabasesModule } from './databases/databases.module';
     AuthModule,
     MailModule,
     DatabasesModule,
+    BooksModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({

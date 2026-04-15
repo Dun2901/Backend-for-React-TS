@@ -34,7 +34,6 @@ export class UsersController {
     return this.usersService.findAll(+currentPage, +limit, qs);
   }
 
-  @Public()
   @Get(':id')
   @ResponseMessage('Fetch user by id')
   findOne(@Param('id') id: string) {

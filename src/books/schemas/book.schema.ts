@@ -1,51 +1,33 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 
-export type UserDocument = HydratedDocument<User>;
+export type BookDocument = HydratedDocument<Book>;
 
 @Schema({ timestamps: true })
-export class User {
+export class Book {
   @Prop()
-  fullName: string;
-
-  @Prop()
-  password: string;
+  thumbnail: string;
 
   @Prop()
-  email: string;
+  slider: string[];
 
   @Prop()
-  phone: number;
-
-  @Prop({ default: 'USER' })
-  role: string;
-
-  @Prop({ default: 'c21f969b5f03d33d43e04f8f136e7682.png' })
-  avatar: string;
-
-  @Prop({ default: false })
-  isActive: boolean;
-
-  @Prop({ default: 'LOCAL' })
-  accountType: string;
+  mainText: string;
 
   @Prop()
-  codeId: string;
+  author: string;
 
   @Prop()
-  codeExpired: Date;
+  price: number;
 
   @Prop()
-  passwordResetToken: string;
+  quantity: number;
+
+  @Prop({ default: 0 })
+  sold: number;
 
   @Prop()
-  passwordResetExpired: Date;
-
-  @Prop()
-  passwordChangeAt: Date;
-
-  @Prop()
-  refreshToken: string;
+  category: string;
 
   @Prop({ type: Object })
   createdBy: {
@@ -71,4 +53,4 @@ export class User {
    */
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const BookSchema = SchemaFactory.createForClass(Book);
