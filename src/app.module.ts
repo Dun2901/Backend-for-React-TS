@@ -9,6 +9,7 @@ import MongooseDelete from 'mongoose-delete';
 import { MailModule } from './mail/mail.module';
 import { DatabasesModule } from './databases/databases.module';
 import { BooksModule } from './books/books.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { BooksModule } from './books/books.module';
       }),
       inject: [ConfigService],
     }),
+    FilesModule,
   ],
 
   controllers: [AppController],
