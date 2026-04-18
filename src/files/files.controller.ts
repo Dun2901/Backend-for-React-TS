@@ -8,13 +8,13 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
-  ParseFilePipeBuilder,
-  HttpStatus,
+  BadRequestException,
+  Headers,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Public } from '@/decorator/customize';
+import { Public, ResponseMessage } from '@/decorator/customize';
 
 @Controller('files')
 export class FilesController {
@@ -22,23 +22,23 @@ export class FilesController {
 
   @Public()
   @Post('upload')
+  @ResponseMessage('')
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: /^image/,
-        })
-        .addMaxSizeValidator({
-          maxSize: 1024 * 1024, // KB => 1MB
-        })
-        .build({
-          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
+    @Headers('folder_type') folderType: string, // => req.headers
   ) {
-    console.log(file);
+    if (folderType === 'avatar') {
+      return { fileUploaded: file.filename };
+    }
+
+    if (folderType === 'book') {
+      return { fileUploaded: file.filename };
+    }
+
+    throw new BadRequestException(
+      'Upload failed, cần update Request Header với upload-type',
+    );
   }
 
   @Get()
