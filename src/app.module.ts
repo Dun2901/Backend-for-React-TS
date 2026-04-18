@@ -18,6 +18,7 @@ import { FilesModule } from './files/files.module';
     MailModule,
     DatabasesModule,
     BooksModule,
+    FilesModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
@@ -36,7 +37,6 @@ import { FilesModule } from './files/files.module';
       }),
       inject: [ConfigService],
     }),
-    FilesModule,
   ],
 
   controllers: [AppController],
