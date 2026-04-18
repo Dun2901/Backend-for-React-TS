@@ -28,71 +28,68 @@
 ## Project setup
 
 ```bash
-$ npm install
+# 1. Clone
+git clone https://github.com/Dun2901/Backend-for-React-TS.git
+cd Backend-for-React-TS
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy env
+cp .env.example .env
+# Edit .env xem ở phần giải thích
+
+# 4. Chạy dự án
+npm run dev
 ```
 
-## Compile and run the project
+### `.env.example` File Template
 
-```bash
-# development
-$ npm run start
+```text
+# Server config
+PORT=8081
+MONGODB_URL=
 
-# watch mode
-$ npm run start:dev
+# Config JWT
+JWT_ACCESS_SECRET=
+JWT_ACCESS_EXPIRE=
 
-# production mode
-$ npm run start:prod
+JWT_REFRESH_SECRET=
+JWT_REFRESH_EXPIRE=
+
+# Init sample data
+SHOULD_INIT=true
+INIT_PASSWORD=
+
+# Config EMAIL
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USER=
+MAIL_PASS=
 ```
 
-## Run tests
+### Giải thích các biến môi trường
 
-```bash
-# unit tests
-$ npm run test
+**Server**
 
-# e2e tests
-$ npm run test:e2e
+- `PORT` — Cổng chạy server (mặc định `8081`)
+- `MONGODB_URL` — Connection string MongoDB, ví dụ: `mongodb://localhost:27017/mydb`
 
-# test coverage
-$ npm run test:cov
-```
+**JWT**
 
-## Deployment
+- `JWT_ACCESS_SECRET` — Chuỗi bí mật để ký access token (đặt càng dài càng an toàn)
+- `JWT_ACCESS_EXPIRE` — Thời hạn access token, ví dụ: `15m`
+- `JWT_REFRESH_SECRET` — Chuỗi bí mật để ký refresh token
+- `JWT_REFRESH_EXPIRE` — Thời hạn refresh token, ví dụ: `7d`
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+**Init sample data**
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- `SHOULD_INIT` — `true` nếu muốn seed dữ liệu mẫu lúc khởi động, `false` nếu không
+- `INIT_PASSWORD` — Password mặc định cho các tài khoản được seed đặt là 123456 đều được
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+**Email**
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- `MAIL_HOST` — SMTP host (mặc định Gmail: `smtp.gmail.com`)
+- `MAIL_PORT` — SMTP port (mặc định Gmail: `465`)
+- `MAIL_USER` — Gmail dùng để gửi mail
+- `MAIL_PASS` — App Password của Gmail ([hướng dẫn tạo](https://myaccount.google.com/apppasswords))
