@@ -5,7 +5,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
-import { listUsers } from './init/sample.data';
+import { listBooks, listUsers } from './init/sample.data';
 
 @Injectable()
 export class DatabasesService implements OnModuleInit {
@@ -24,6 +24,7 @@ export class DatabasesService implements OnModuleInit {
     const isInit = this.configService.get<string>('SHOULD_INIT');
     if (isInit) {
       const countUser = await this.userModel.countDocuments({});
+      const countBook = await this.bookModel.countDocuments({});
 
       if (countUser === 0) {
         const hashedPassword = await this.userService.getHashPassword(
@@ -36,8 +37,12 @@ export class DatabasesService implements OnModuleInit {
         await this.userModel.insertMany(users);
       }
 
+      if (countBook === 0) await this.bookModel.insertMany(listBooks);
+
       if (countUser > 0) {
         this.logger.log('>>> ALREADY INIT SAMPLE DATA...');
+      } else {
+        this.logger.log('>>> SUCCESS INIT SAMPLE DATA...');
       }
     }
   }
