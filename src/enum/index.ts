@@ -12,11 +12,11 @@ export enum BOOK_CATEGORY {
 }
 
 export enum UserRoles {
-  USER = 'User',
-  ADMIN = 'Admin',
+  USER = 'USER',
+  ADMIN = 'ADMIN',
 }
 
 export enum authTypeEnum {
-  LOCAL = 'Local',
-  GOOGLE = 'Google',
+  LOCAL = 'LOCAL',
+  GOOGLE = 'GOOGLE',
 }
