@@ -11,6 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import ms from 'ms';
+import { IGoogleUser } from './google-user.interface';
+import { authTypeEnum } from '@/enum';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +36,21 @@ export class AuthService {
     }
 
     throw new BadRequestException('Thông tin đăng nhập không chính xác');
+  }
+
+  async validateUserGoogle(googleUser: IGoogleUser) {
+    const user = await this.usersService.findOneByUsername(googleUser.email);
+    if (user) {
+      // Nếu user đã đăng ký LOCAL → không cho login Google
+      if (user.accountType !== authTypeEnum.GOOGLE) {
+        throw new BadRequestException(
+          `${googleUser.email} address has registered via ${user.accountType}!`,
+        );
+      }
+      return user;
+    }
+    const newUser = await this.usersService.createUserWithGoogle(googleUser);
+    return newUser;
   }
 
   async login(user: IUser, response: Response) {
@@ -131,7 +148,7 @@ export class AuthService {
           'Không tồn tại refresh_token ở database. Please do login again.',
         );
       }
-    } catch (error) {
+    } catch {
       throw new BadRequestException(
         'Refresh token không hợp lệ. Vui lòng login.',
       );

@@ -25,6 +25,8 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from './dto/password-user.dto';
+import { IGoogleUser } from '@/auth/google-user.interface';
+import { authTypeEnum, UserRoles } from '@/enum';
 
 @Injectable()
 export class UsersService {
@@ -110,6 +112,9 @@ export class UsersService {
   }
 
   async findOneByUsername(username: string) {
+    if (!username) {
+      throw new NotFoundException('user not found');
+    }
     return await this.userModel.findOne({
       email: username,
     });
@@ -356,5 +361,23 @@ export class UsersService {
     );
 
     return { isNotExpired };
+  }
+
+  async createUserWithGoogle(googleUser: IGoogleUser) {
+    // Check if user exists
+    const userExists = await this.findOneByUsername(googleUser.email);
+    if (userExists) {
+      throw new BadRequestException('User already exists');
+    }
+
+    // Create new User
+    const user = await this.userModel.create({
+      ...googleUser,
+      password: '',
+      role: UserRoles.USER,
+      isActive: true,
+      accountType: authTypeEnum.GOOGLE,
+    });
+    return user;
   }
 }

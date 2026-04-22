@@ -1,3 +1,4 @@
+import { authTypeEnum, UserRoles } from '@/enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 
@@ -17,8 +18,8 @@ export class User {
   @Prop()
   phone: number;
 
-  @Prop({ default: 'USER' })
-  role: string;
+  @Prop({ enum: UserRoles, default: UserRoles.USER })
+  role: UserRoles;
 
   @Prop({ default: 'c21f969b5f03d33d43e04f8f136e7682.png' })
   avatar: string;
@@ -26,8 +27,8 @@ export class User {
   @Prop({ default: false })
   isActive: boolean;
 
-  @Prop({ default: 'LOCAL' })
-  accountType: string;
+  @Prop({ enum: authTypeEnum, default: authTypeEnum.LOCAL })
+  accountType: authTypeEnum;
 
   @Prop()
   codeId: string;

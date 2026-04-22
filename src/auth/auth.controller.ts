@@ -20,6 +20,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '@/users/dto/password-user.dto';
+import { GoogleOauthGuard } from './guards/google-oauth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -42,6 +43,16 @@ export class AuthController {
   handleRegister(@Body() registerUserDto: RegisterUserDto) {
     return this.authService.register(registerUserDto);
   }
+
+  @Public()
+  @Get('/google')
+  @UseGuards(GoogleOauthGuard)
+  async googleLogin() {}
+
+  @Public()
+  @Get('/google/redirect')
+  @UseGuards(GoogleOauthGuard)
+  async googleCallBack(@Req() req) {}
 
   @Get('/account')
   @ResponseMessage('Get user information')

@@ -10,3 +10,13 @@ export enum BOOK_CATEGORY {
   TEEN = 'Teen',
   TRAVEL = 'Travel',
 }
+
+export enum UserRoles {
+  USER = 'User',
+  ADMIN = 'Admin',
+}
+
+export enum authTypeEnum {
+  LOCAL = 'Local',
+  GOOGLE = 'Google',
+}
