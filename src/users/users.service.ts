@@ -111,12 +111,12 @@ export class UsersService {
     return await this.userModel.findById(id).select('-password'); // "-" is remove field
   }
 
-  async findOneByUsername(username: string) {
-    if (!username) {
+  async findByEmail(email: string) {
+    if (!email) {
       throw new NotFoundException('user not found');
     }
     return await this.userModel.findOne({
-      email: username,
+      email,
     });
   }
 
@@ -365,7 +365,7 @@ export class UsersService {
 
   async createUserWithGoogle(googleUser: IGoogleUser) {
     // Check if user exists
-    const userExists = await this.findOneByUsername(googleUser.email);
+    const userExists = await this.findByEmail(googleUser.email);
     if (userExists) {
       throw new BadRequestException('User already exists');
     }

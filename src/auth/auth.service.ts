@@ -23,8 +23,14 @@ export class AuthService {
   ) {}
 
   // Username, pass là 2 tham số thư viện passport ném về
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOneByUsername(username);
+  async validateUserLocal(email: string, pass: string): Promise<any> {
+    const user = await this.usersService.findByEmail(email);
+    if (user?.accountType !== authTypeEnum.LOCAL) {
+      throw new BadRequestException(
+        `${email} address has registered via ${user?.accountType}!`,
+      );
+    }
+
     if (user) {
       const isValid = await this.usersService.isValidPassword(
         pass,
@@ -39,7 +45,7 @@ export class AuthService {
   }
 
   async validateUserGoogle(googleUser: IGoogleUser) {
-    const user = await this.usersService.findOneByUsername(googleUser.email);
+    const user = await this.usersService.findByEmail(googleUser.email);
     if (user) {
       // Nếu user đã đăng ký LOCAL → không cho login Google
       if (user.accountType !== authTypeEnum.GOOGLE) {
