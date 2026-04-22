@@ -13,6 +13,7 @@ import { Response } from 'express';
 import ms from 'ms';
 import { IGoogleUser } from './google-user.interface';
 import { authTypeEnum } from '@/enum';
+import { User } from '@/users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +24,10 @@ export class AuthService {
   ) {}
 
   // Username, pass là 2 tham số thư viện passport ném về
-  async validateUserLocal(email: string, pass: string): Promise<any> {
+  async validateUserLocal(
+    email: string,
+    pass: string,
+  ): Promise<Partial<User> | null> {
     const user = await this.usersService.findByEmail(email);
     if (user?.accountType !== authTypeEnum.LOCAL) {
       throw new BadRequestException(
@@ -44,7 +48,9 @@ export class AuthService {
     throw new BadRequestException('Thông tin đăng nhập không chính xác');
   }
 
-  async validateUserGoogle(googleUser: IGoogleUser) {
+  async validateUserGoogle(
+    googleUser: IGoogleUser,
+  ): Promise<Partial<User> | null> {
     const user = await this.usersService.findByEmail(googleUser.email);
     if (user) {
       // Nếu user đã đăng ký LOCAL → không cho login Google
