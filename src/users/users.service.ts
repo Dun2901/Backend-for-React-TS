@@ -25,7 +25,6 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from './dto/password-user.dto';
-import { IGoogleUser } from '@/auth/google-user.interface';
 import { authTypeEnum, UserRoles } from '@/enum';
 
 @Injectable()
