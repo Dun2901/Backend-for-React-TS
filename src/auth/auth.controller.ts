@@ -55,12 +55,9 @@ export class AuthController {
   @Public()
   @Get('/google/redirect')
   @UseGuards(GoogleOauthGuard)
-  async googleCallBack(
-    @User() user: IUser,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const auth = await this.authService.login(user, res);
-    res.redirect(`http://localhost:3000?token=${auth.access_token}`);
+  async googleCallBack(@User() user: IUser, @Res() res: Response) {
+    const { access_token } = await this.authService.login(user, res);
+    res.redirect(`http://localhost:3000?token=${access_token}`);
   }
 
   @Get('/account')
