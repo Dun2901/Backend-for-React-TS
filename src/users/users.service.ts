@@ -159,6 +159,8 @@ export class UsersService {
       email,
       password: hashPassword,
       phone,
+      accountType: authTypeEnum.LOCAL,
+      role: UserRoles.USER,
       isActive: false,
       codeId: uuidv4(),
       codeExpired: dayjs().add(5, 'minutes').toDate(),

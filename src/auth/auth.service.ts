@@ -11,16 +11,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import ms from 'ms';
-import { IGoogleUser } from './google-user.interface';
 import { authTypeEnum } from '@/enum';
 import { User } from '@/users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private configService: ConfigService<IConfigService>,
   ) {}
 
   // Username, pass là 2 tham số thư viện passport ném về
