@@ -14,7 +14,6 @@ import { Public, ResponseMessage, User } from '@/decorator/customize';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RegisterUserDto, VerifyCodeDto } from '@/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
-import type { IUser } from '@/users/users.interface';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,

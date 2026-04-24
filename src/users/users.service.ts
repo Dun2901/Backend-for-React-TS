@@ -18,7 +18,6 @@ import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailService } from '@/mail/mail.service';
-import { IUser } from './users.interface';
 import aqp from 'api-query-params';
 import {
   ChangePasswordDto,

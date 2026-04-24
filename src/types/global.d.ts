@@ -1,5 +1,3 @@
-import { IUser } from '@/users/users.interface';
-
 export {};
 
 declare global {
@@ -23,6 +21,13 @@ declare global {
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_SECRET?: string;
     GOOGLE_REDIRECT_URL?: string;
+  }
+
+  interface IUser {
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
   }
 
   interface IGoogleUser {

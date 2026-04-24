@@ -4,7 +4,6 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '@/users/dto/password-user.dto';
-import { IUser } from '@/users/users.interface';
 import { UsersService } from '@/users/users.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

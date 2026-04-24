@@ -4,7 +4,6 @@ import { UpdateBookDto } from './dto/update-book.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Book, BookDocument } from './schemas/book.schema';
 import type { SoftDeleteModel } from 'mongoose-delete';
-import { IUser } from '@/users/users.interface';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
 
