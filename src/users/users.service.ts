@@ -211,14 +211,16 @@ export class UsersService {
     }
     // Kiểm tra code có đúng không
     if (user.codeId !== codeId) {
-      throw new BadRequestException('Mã xác thực không hợp lệ');
+      throw new BadRequestException(
+        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
+      );
     }
 
     // check code expire
     const isExpired = dayjs().isAfter(user.codeExpired);
     if (isExpired) {
       throw new BadRequestException(
-        'Mã xác thực đã hết hạn, vui lòng yêu cầu mã mới',
+        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
       );
     }
 
