@@ -27,23 +27,23 @@ export class AuthService {
     pass: string,
   ): Promise<Partial<User> | null> {
     const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('Thông tin đăng nhập không chính xác');
+    }
     if (user?.accountType !== authTypeEnum.LOCAL) {
       throw new BadRequestException(
         `${email} address has registered via ${user?.accountType}!`,
       );
     }
 
-    if (user) {
-      const isValid = await this.usersService.isValidPassword(
-        pass,
-        user?.password,
-      );
-      if (isValid === true) {
-        return user;
-      }
+    const isValid = await this.usersService.isValidPassword(
+      pass,
+      user.password,
+    );
+    if (!isValid) {
+      throw new BadRequestException('Thông tin đăng nhập không chính xác');
     }
-
-    throw new BadRequestException('Thông tin đăng nhập không chính xác');
+    return user;
   }
 
   async validateUserGoogle(

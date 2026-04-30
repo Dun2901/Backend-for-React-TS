@@ -71,7 +71,7 @@ export class UsersService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, sort, population, projection } = aqp(qs);
+    const { filter, sort, population } = aqp(qs);
     delete filter.current;
     delete filter.pageSize;
 
@@ -351,7 +351,7 @@ export class UsersService {
     }
 
     // Update password
-    const hashPassword = this.getHashPassword(newPassword);
+    const hashPassword = await this.getHashPassword(newPassword);
     await this.userModel.updateOne(
       { email },
       {
