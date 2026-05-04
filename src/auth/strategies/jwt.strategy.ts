@@ -15,13 +15,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: IUser) {
-    const { _id, fullName, email, role } = payload;
+    const { _id, fullName, email, role, avatar } = payload;
     // Giải mã xong gán vào req.user
     return {
       _id,
       fullName,
       email,
       role,
+      avatar,
     };
   }
 }
