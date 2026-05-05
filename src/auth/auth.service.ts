@@ -121,7 +121,7 @@ export class AuthService {
 
       const user = await this.usersService.findUserByToken(refreshToken);
       if (user) {
-        const { _id, email, fullName, role } = user;
+        const { _id, email, fullName, role, avatar } = user;
         const payload = {
           sub: 'token refresh',
           iss: 'from server',
@@ -129,6 +129,7 @@ export class AuthService {
           fullName,
           email,
           role,
+          avatar: avatar ? avatar : 'c21f969b5f03d33d43e04f8f136e7682.png',
         };
 
         const refresh_token = this.createRefreshToken(payload);
@@ -154,6 +155,7 @@ export class AuthService {
             fullName,
             email,
             role,
+            avatar,
           },
         };
       } else {
