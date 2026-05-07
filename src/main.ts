@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TransformInterceptor } from './core/transform.interceptor';
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
+import { GlobalExceptionFilter } from './exceptions/all-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,6 +23,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Config cookies
   app.use(cookieParser());
