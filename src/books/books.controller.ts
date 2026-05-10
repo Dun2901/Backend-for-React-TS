@@ -51,7 +51,7 @@ export class BooksController {
 
   @Delete(':id')
   @ResponseMessage('Delete a book')
-  remove(@Param('id') id: string, @User() user: IUser) {
+  remove(@Param('id') id: string, @User() user: IUser): Promise<any> {
     return this.booksService.remove(id, user._id);
   }
 }

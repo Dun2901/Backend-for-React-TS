@@ -4,7 +4,7 @@ import { UpdateBookDto } from './dto/update-book.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Book, BookDocument } from './schemas/book.schema';
 import type { SoftDeleteModel } from 'mongoose-delete';
-import mongoose from 'mongoose';
+import mongoose, { SchemaTypes } from 'mongoose';
 import aqp from 'api-query-params';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class BooksService {
   async create(createBookDto: CreateBookDto, user: IUser) {
     const newBook = await this.bookModel.create({
       ...createBookDto,
-      createdBy: { _id: user._id as any, email: user.email },
+      createdBy: { _id: new SchemaTypes.ObjectId(user._id), email: user.email },
     });
 
     return {
