@@ -54,4 +54,5 @@ export class UsersController {
   remove(@Param('id') id: string, @User() user: IUser): Promise<any> {
     return this.usersService.remove(id, user._id);
   }
+
 }
