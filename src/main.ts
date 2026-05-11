@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { TransformInterceptor } from './core/transform.interceptor';
+import { TransformInterceptor } from './interceptors/transform.interceptor';
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { GlobalExceptionFilter } from './exceptions/all-exception.filter';

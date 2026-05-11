@@ -51,11 +51,11 @@ export class UsersService {
         'Email đã tồn tại, vui lòng sử dụng email khác',
       );
     }
-
-    const hashPassword = await this.getHashPassword(createUserDto.password);
+    const { password, ...rest } = createUserDto;
+    const hashPassword = await this.getHashPassword(password);
 
     const newUser = await this.userModel.create({
-      ...createUserDto,
+      ...rest,
       isActive: true,
       password: hashPassword,
       createdBy: {
@@ -86,7 +86,14 @@ export class UsersService {
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
-      .select(['-password', '-refreshToken'])
+      .select([
+        '-password',
+        '-refreshToken',
+        '-codeId',
+        '-codeExpired',
+        '-passwordResetToken',
+        '-passwordResetExpired',
+      ])
       .populate(population)
       .exec();
 
@@ -106,7 +113,16 @@ export class UsersService {
       throw new BadRequestException('Not a valid ObjectId!');
     }
 
-    return await this.userModel.findById(id).select('-password'); // "-" is remove field
+    return await this.userModel
+      .findById(id)
+      .select([
+        '-password',
+        '-refreshToken',
+        '-codeId',
+        '-codeExpired',
+        '-passwordResetToken',
+        '-passwordResetExpired',
+      ]); // "-" is remove field
   }
 
   async findByEmail(email: string) {
