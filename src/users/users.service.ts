@@ -93,7 +93,8 @@ export class UsersService {
         '-codeExpired',
         '-passwordResetToken',
         '-passwordResetExpired',
-      ])
+        '-passwordChangeAt',
+      ]) // "-" is remove field;
       .populate(population)
       .exec();
 
@@ -113,16 +114,13 @@ export class UsersService {
       throw new BadRequestException('Not a valid ObjectId!');
     }
 
-    return await this.userModel
-      .findById(id)
-      .select([
-        '-password',
-        '-refreshToken',
-        '-codeId',
-        '-codeExpired',
-        '-passwordResetToken',
-        '-passwordResetExpired',
-      ]); // "-" is remove field
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    return user;
   }
 
   async findByEmail(email: string) {
@@ -153,18 +151,20 @@ export class UsersService {
     }
 
     const user = await this.userModel.findById(id);
-    if (user) {
-      if (
-        user.email === 'admin@gmail.com' ||
-        user.email === 'user@gmail.com' ||
-        user.email === 'guest@gmail.com'
-      ) {
-        throw new BadRequestException(
-          'Định mệnh, xóa tài khoản này lấy gì mà test @@',
-        );
-      }
-      return await this.userModel.delete({ _id: id }, deletedBy);
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+    if (
+      user.email === 'admin@gmail.com' ||
+      user.email === 'user@gmail.com' ||
+      user.email === 'guest@gmail.com'
+    ) {
+      throw new BadRequestException(
+        'Định mệnh, xóa tài khoản này lấy gì mà test @@',
+      );
+    }
+
+    return await this.userModel.delete({ _id: id }, deletedBy);
   }
 
   async register(registerUserDto: RegisterUserDto) {

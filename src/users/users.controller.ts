@@ -12,6 +12,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseMessage, User } from '@/decorator/customize';
+import { Serialize } from '@/interceptors/serialize.interceptor';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -34,6 +36,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Serialize(UserResponseDto)
   @ResponseMessage('Fetch user by id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
