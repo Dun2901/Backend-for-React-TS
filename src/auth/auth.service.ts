@@ -72,7 +72,7 @@ export class AuthService {
       fullName,
       email,
       role,
-      avatar: avatar ? avatar : 'c21f969b5f03d33d43e04f8f136e7682.png',
+      avatar: avatar ? avatar : 'default-user.png',
     };
 
     const refresh_token = this.createRefreshToken(payload);
@@ -129,7 +129,7 @@ export class AuthService {
           fullName,
           email,
           role,
-          avatar: avatar ? avatar : 'c21f969b5f03d33d43e04f8f136e7682.png',
+          avatar: avatar ? avatar : 'default-user.png',
         };
 
         const refresh_token = this.createRefreshToken(payload);

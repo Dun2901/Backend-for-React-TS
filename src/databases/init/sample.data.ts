@@ -3108,7 +3108,7 @@ export const listUsers = [
     email: 'user@gmail.com',
     isActive: true,
     password: '123456',
-    avatar: 'ee11cbb19052e40b07aac0ca060c23ee.png',
+    avatar: 'default-user.png',
   },
 ];
 
