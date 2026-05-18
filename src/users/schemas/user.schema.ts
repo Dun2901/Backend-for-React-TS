@@ -46,7 +46,7 @@ export class User {
   passwordChangeAt: Date;
 
   @Prop()
-  refreshToken: string;
+  hashedRefreshToken: string;
 
   @Prop({ type: Object })
   createdBy: {

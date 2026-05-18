@@ -5,13 +5,27 @@ import {
   ResetPasswordDto,
 } from '@/users/dto/password-user.dto';
 import { UsersService } from '@/users/users.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import ms from 'ms';
 import { authTypeEnum } from '@/enum';
 import { User } from '@/users/schemas/user.schema';
+import { compareToken, hashToken } from '@/helpers/token.helper';
+import { Types } from 'mongoose';
+
+type TokenUser = {
+  _id: string | Types.ObjectId;
+  email: string;
+  fullName: string;
+  role: string;
+  avatar?: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -65,23 +79,14 @@ export class AuthService {
 
   async login(user: IUser, response: Response) {
     const { _id, email, fullName, role, phone, avatar } = user;
-    const payload = {
-      sub: 'token login',
-      iss: 'from server',
-      _id,
-      fullName,
-      email,
-      role,
-      avatar: avatar ? avatar : 'default-user.png',
-    };
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+    const refreshTokenHash = await hashToken(refreshToken);
 
-    const refresh_token = this.createRefreshToken(payload);
-
-    // Update user with refresh_token
-    await this.usersService.updateUserToken(refresh_token, _id);
+    // Lưu hash refresh token vào database
+    await this.usersService.updateUserToken(refreshTokenHash, _id);
 
     // Set refresh_token as cookies
-    response.cookie('refresh_token', refresh_token, {
+    response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       maxAge: ms(
         this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue,
@@ -89,11 +94,11 @@ export class AuthService {
     });
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
       user: {
         _id,
-        fullName,
         email,
+        fullName,
         role,
         phone,
         avatar,
@@ -113,65 +118,115 @@ export class AuthService {
     return refresh_token;
   };
 
+  async generateTokens(user: TokenUser) {
+    const { _id, email, fullName, role, avatar } = user;
+    const payload = {
+      sub: 'token',
+      iss: 'from server',
+      _id,
+      fullName,
+      email,
+      role,
+      avatar: avatar ? avatar : 'default-user.png',
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRE'),
+    } as JwtSignOptions);
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE'),
+    } as JwtSignOptions);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
   processNewToken = async (refreshToken: string, response: Response) => {
     try {
-      this.jwtService.verify(refreshToken, {
+      if (!refreshToken) {
+        throw new BadRequestException(
+          'Không tìm thấy refresh token. Vui lòng login lại.',
+        );
+      }
+
+      const payload = this.jwtService.verify<IJwtPayload>(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
-      const user = await this.usersService.findUserByToken(refreshToken);
-      if (user) {
-        const { _id, email, fullName, role, avatar } = user;
-        const payload = {
-          sub: 'token refresh',
-          iss: 'from server',
-          _id,
-          fullName,
-          email,
-          role,
-          avatar: avatar ? avatar : 'default-user.png',
-        };
-
-        const refresh_token = this.createRefreshToken(payload);
-
-        // Update user with refresh_token
-        await this.usersService.updateUserToken(refresh_token, _id.toString());
-
-        // Set refresh_token as cookies
-        response.clearCookie('refresh_token');
-        response.cookie('refresh_token', refresh_token, {
-          httpOnly: true,
-          maxAge: ms(
-            this.configService.get<string>(
-              'JWT_REFRESH_EXPIRE',
-            ) as ms.StringValue,
-          ),
-        });
-
-        return {
-          access_token: this.jwtService.sign(payload),
-          user: {
-            _id,
-            fullName,
-            email,
-            role,
-            avatar,
-          },
-        };
-      } else {
-        throw new BadRequestException(
-          'Không tồn tại refresh_token ở database. Please do login again.',
+      const user = await this.usersService.findByEmail(payload.email);
+      if (!user || !user.hashedRefreshToken) {
+        throw new NotFoundException(
+          'Không tồn tại refresh_token ở database. Vui lòng login lại.',
         );
       }
-    } catch {
-      throw new BadRequestException(
-        'Refresh token không hợp lệ. Vui lòng login.',
+
+      const isMatch = await compareToken(refreshToken, user.hashedRefreshToken);
+      if (!isMatch) {
+        await this.usersService.updateUserToken(null, user._id.toString());
+        response.clearCookie('refresh_token');
+        throw new BadRequestException({
+          code: 'REFRESH_TOKEN_REUSED',
+          message: 'Refresh token đã bị dùng lại. Vui lòng login lại.',
+        });
+      }
+
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.generateTokens(user);
+
+      const newRefreshTokenHash = await hashToken(newRefreshToken);
+
+      await this.usersService.updateUserToken(
+        newRefreshTokenHash,
+        user._id.toString(),
       );
+
+      response.clearCookie('refresh_token');
+      response.cookie('refresh_token', newRefreshToken, {
+        httpOnly: true,
+        maxAge: ms(
+          this.configService.get<string>(
+            'JWT_REFRESH_EXPIRE',
+          ) as ms.StringValue,
+        ),
+      });
+
+      return {
+        access_token: accessToken,
+        user: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar ? user.avatar : 'default-user.png',
+        },
+      };
+    } catch (error) {
+      response.clearCookie('refresh_token');
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException({
+        code: 'REFRESH_TOKEN_INVALID',
+        message: 'Refresh token không hợp lệ hoặc đã hết hạn. Vui lòng login.',
+      });
     }
   };
 
-  logout = async (user: IUser, response: Response) => {
-    await this.usersService.updateUserToken('', user._id);
+  logout = async (refreshToken: string, response: Response) => {
+    const payload = this.jwtService.decode<IJwtPayload>(refreshToken);
+
+    if (payload?.email) {
+      const user = await this.usersService.findByEmail(payload.email);
+
+      if (user) {
+        await this.usersService.updateUserToken(null, user._id.toString());
+      }
+    }
     response.clearCookie('refresh_token');
     return 'ok';
   };

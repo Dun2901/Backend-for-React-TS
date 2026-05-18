@@ -89,6 +89,7 @@ export class UsersService {
       .select([
         '-password',
         '-refreshToken',
+        '-hashedRefreshToken',
         '-codeId',
         '-codeExpired',
         '-passwordResetToken',
@@ -208,21 +209,13 @@ export class UsersService {
     };
   }
 
-  updateUserToken = async (refreshToken: string, _id: string) => {
-    return await this.userModel.updateOne(
+  updateUserToken = async (hashedRefreshToken: string | null, _id: string) => {
+    return await this.userModel.findByIdAndUpdate(
       { _id },
       {
-        refreshToken,
+        hashedRefreshToken,
       },
     );
-  };
-
-  findUserByToken = async (refreshToken: string) => {
-    return await this.userModel
-      .findOne({
-        refreshToken,
-      })
-      .select('-password');
   };
 
   async activateAccount(verifyCodeDto: VerifyCodeDto) {

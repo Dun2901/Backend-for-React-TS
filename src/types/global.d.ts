@@ -32,6 +32,16 @@ declare global {
     avatar: string;
   }
 
+  interface IJwtPayload {
+    sub: string;
+    iss: string;
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+    avatar: string;
+  }
+
   interface IGoogleUser {
     fullName: string;
     email: string;
