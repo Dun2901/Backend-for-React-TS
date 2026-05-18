@@ -12,7 +12,7 @@ import {
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
-import mongoose, { SchemaTypes } from 'mongoose';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,7 +59,7 @@ export class UsersService {
       isActive: true,
       password: hashPassword,
       createdBy: {
-        _id: new SchemaTypes.ObjectId(user._id),
+        _id: user._id,
         email: user.email,
       },
     });

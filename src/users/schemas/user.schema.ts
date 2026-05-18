@@ -50,13 +50,13 @@ export class User {
 
   @Prop({ type: Object })
   createdBy: {
-    _id: mongoose.Schema.Types.ObjectId;
+    _id: mongoose.Types.ObjectId;
     email: string;
   };
 
   @Prop({ type: Object })
   updatedBy: {
-    _id: mongoose.Schema.Types.ObjectId;
+    _id: mongoose.Types.ObjectId;
     email: string;
   };
 
@@ -67,8 +67,9 @@ export class User {
   updatedAt: Date;
 
   /*
-   * createdAt, updatedAt, _id => có timestamps: true thì 3 field này mongoose tự thêm
-   * soft-delete deletedAt, deletedBy, deleted => plugin mongoose-delete lo
+   * _id: Mongoose tự thêm mặc định
+   * createdAt, updatedAt: timestamps: true tự thêm
+   * deleted, deletedAt, deletedBy: mongoose-delete plugin xử lý
    */
 }
 
