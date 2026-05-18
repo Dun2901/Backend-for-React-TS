@@ -11,21 +11,24 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ResponseMessage, User } from '@/decorator/customize';
+import { ResponseMessage, Roles, User } from '@/decorator/customize';
 import { Serialize } from '@/interceptors/serialize.interceptor';
 import { UserResponseDto } from './dto/user-response.dto';
+import { UserRoles } from '@/enum';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Roles(UserRoles.ADMIN)
   @ResponseMessage('Create a user')
   create(@Body() createUserDto: CreateUserDto, @User() user: IUser) {
     return this.usersService.create(createUserDto, user);
   }
 
   @Get()
+  @Roles(UserRoles.ADMIN)
   @ResponseMessage('Fetch user with paginate')
   findAll(
     @Query('current') currentPage: string,
@@ -43,6 +46,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Roles(UserRoles.ADMIN)
   @ResponseMessage('Update a user')
   update(
     @Param('id') id: string,
@@ -53,6 +57,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(UserRoles.ADMIN)
   @ResponseMessage('Delete a User')
   remove(@Param('id') id: string, @User() user: IUser): Promise<any> {
     return this.usersService.remove(id, user._id);

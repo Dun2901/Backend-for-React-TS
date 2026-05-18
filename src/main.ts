@@ -8,6 +8,7 @@ import { TransformInterceptor } from './interceptors/transform.interceptor';
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { GlobalExceptionFilter } from './exceptions/all-exception.filter';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -15,7 +16,7 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 8081;
 
   const reflector = app.get(Reflector);
-  app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
