@@ -3112,6 +3112,19 @@ export const listUsers = [
   },
 ];
 
+export const listCategories = [
+  { name: 'Arts', slug: 'arts', description: '' },
+  { name: 'Business', slug: 'business', description: '' },
+  { name: 'Comics', slug: 'comics', description: '' },
+  { name: 'Cooking', slug: 'cooking', description: '' },
+  { name: 'Entertainment', slug: 'entertainment', description: '' },
+  { name: 'History', slug: 'history', description: '' },
+  { name: 'Music', slug: 'music', description: '' },
+  { name: 'Sports', slug: 'sports', description: '' },
+  { name: 'Teen', slug: 'teen', description: '' },
+  { name: 'Travel', slug: 'travel', description: '' },
+];
+
 export const listBooks = [
   {
     thumbnail: '1-5e81d7f66dada42752efb220d7b2956c.jpg',
@@ -3121,7 +3134,7 @@ export const listBooks = [
     price: 80000,
     sold: 2,
     quantity: 1000,
-    category: 'Business',
+    categorySlug: 'business',
   },
   {
     thumbnail: '3-931186dd6dcd231da1032c8220332fea.jpg',
@@ -3132,7 +3145,7 @@ export const listBooks = [
     price: 70000,
     sold: 20,
     quantity: 1000,
-    category: 'Arts',
+    categorySlug: 'arts',
   },
   {
     thumbnail: '4-7827a39c17b68337b093de7850fc3337.jpg',
@@ -3142,7 +3155,7 @@ export const listBooks = [
     price: 250000,
     sold: 20,
     quantity: 1000,
-    category: 'Teen',
+    categorySlug: 'teen',
   },
   {
     thumbnail: '5-c62daefbb240e7fe8c6d96a4b745824f.jpg',
@@ -3155,7 +3168,7 @@ export const listBooks = [
     price: 649000,
     sold: 29,
     quantity: 1000,
-    category: 'Cooking',
+    categorySlug: 'cooking',
   },
   {
     thumbnail: '8-341425768114119392af4e217bbe4db2.jpg',
@@ -3165,7 +3178,7 @@ export const listBooks = [
     price: 111123,
     sold: 29,
     quantity: 1000,
-    category: 'Entertainment',
+    categorySlug: 'entertainment',
   },
   {
     thumbnail: '9-3220b4dac1f50035b534f7b5a907b62e.jpg',
@@ -3175,7 +3188,7 @@ export const listBooks = [
     price: 171000,
     sold: 29,
     quantity: 1000,
-    category: 'History',
+    categorySlug: 'history',
   },
   {
     thumbnail: '11-dc801dd2a968c1a43ec9270728555fbe.jpg',
@@ -3185,7 +3198,7 @@ export const listBooks = [
     price: 60000,
     sold: 29,
     quantity: 1000,
-    category: 'Music',
+    categorySlug: 'music',
   },
   {
     thumbnail: '12-45dbffab3a67de798a132d43e80b833e.jpg',
@@ -3198,7 +3211,7 @@ export const listBooks = [
     price: 127000,
     sold: 29,
     quantity: 1000,
-    category: 'Sports',
+    categorySlug: 'sports',
   },
   {
     thumbnail: '15-afa213ab31cefd06d49b977a2f4ab594.jpg',
@@ -3211,7 +3224,7 @@ export const listBooks = [
     price: 52000,
     sold: 29,
     quantity: 1000,
-    category: 'Comics',
+    categorySlug: 'comics',
   },
   {
     thumbnail: '18-0224e8d0a47a4f05ccb0dbe2062cfd92.jpg',
@@ -3221,6 +3234,6 @@ export const listBooks = [
     price: 292000,
     sold: 29,
     quantity: 1000,
-    category: 'Travel',
+    categorySlug: 'travel',
   },
 ];

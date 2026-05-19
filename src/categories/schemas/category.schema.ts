@@ -1,34 +1,29 @@
-import { Category } from '@/categories/schemas/category.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 
-export type BookDocument = HydratedDocument<Book>;
+export type CategoryDocument = HydratedDocument<Category>;
 
-@Schema({ timestamps: true })
-export class Book {
-  @Prop()
-  thumbnail: string;
+@Schema({
+  timestamps: true,
+})
+export class Category {
+  @Prop({
+    trim: true,
+  })
+  name: string;
 
-  @Prop()
-  slider: string[];
+  @Prop({
+    unique: true,
+    trim: true,
+    lowercase: true,
+  })
+  slug: string;
 
-  @Prop()
-  mainText: string;
-
-  @Prop()
-  author: string;
-
-  @Prop()
-  price: number;
-
-  @Prop()
-  quantity: number;
-
-  @Prop({ default: 0 })
-  sold: number;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Category.name })
-  category: mongoose.Types.ObjectId;
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  description: string;
 
   @Prop({ type: Object })
   createdBy: {
@@ -55,4 +50,4 @@ export class Book {
    */
 }
 
-export const BookSchema = SchemaFactory.createForClass(Book);
+export const CategorySchema = SchemaFactory.createForClass(Category);

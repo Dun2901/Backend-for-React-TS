@@ -5,7 +5,11 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
-import { listBooks, listUsers } from './init/sample.data';
+import { listBooks, listCategories, listUsers } from './init/sample.data';
+import {
+  Category,
+  CategoryDocument,
+} from '@/categories/schemas/category.schema';
 
 @Injectable()
 export class DatabasesService implements OnModuleInit {
@@ -13,8 +17,9 @@ export class DatabasesService implements OnModuleInit {
 
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
-
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
+    @InjectModel(Category.name)
+    private categoryModel: SoftDeleteModel<CategoryDocument>,
 
     private configService: ConfigService,
     private userService: UsersService,
@@ -25,6 +30,7 @@ export class DatabasesService implements OnModuleInit {
     if (isInit) {
       const countUser = await this.userModel.countDocuments({});
       const countBook = await this.bookModel.countDocuments({});
+      const countCategory = await this.categoryModel.countDocuments({});
 
       if (countUser === 0) {
         const hashedPassword = await this.userService.getHashPassword(
@@ -37,7 +43,19 @@ export class DatabasesService implements OnModuleInit {
         await this.userModel.insertMany(users);
       }
 
-      if (countBook === 0) await this.bookModel.insertMany(listBooks);
+      if (countCategory === 0)
+        await this.categoryModel.insertMany(listCategories);
+      if (countBook === 0) {
+        const categories = await this.categoryModel.find();
+        const categoryMap = new Map(categories.map((c) => [c.slug, c._id]));
+
+        const books = listBooks.map(({ categorySlug, ...rest }) => ({
+          ...rest,
+          category: categoryMap.get(categorySlug),
+        }));
+
+        await this.bookModel.insertMany(books);
+      }
 
       if (countUser > 0) {
         this.logger.log('>>> ALREADY INIT SAMPLE DATA...');
