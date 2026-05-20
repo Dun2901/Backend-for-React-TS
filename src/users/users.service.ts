@@ -86,16 +86,16 @@ export class UsersService {
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
-      .select([
-        '-password',
-        '-refreshToken',
-        '-hashedRefreshToken',
-        '-codeId',
-        '-codeExpired',
-        '-passwordResetToken',
-        '-passwordResetExpired',
-        '-passwordChangeAt',
-      ]) // "-" is remove field;
+      // .select([
+      //   '-password',
+      //   '-refreshToken',
+      //   '-hashedRefreshToken',
+      //   '-codeId',
+      //   '-codeExpired',
+      //   '-passwordResetToken',
+      //   '-passwordResetExpired',
+      //   '-passwordChangeAt',
+      // ])  "-" is remove field;
       .populate(population)
       .exec();
 

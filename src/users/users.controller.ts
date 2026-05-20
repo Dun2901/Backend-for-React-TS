@@ -13,8 +13,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseMessage, Roles, User } from '@/decorator/customize';
 import { Serialize } from '@/interceptors/serialize.interceptor';
-import { UserResponseDto } from './dto/user-response.dto';
 import { UserRoles } from '@/enum';
+import { UserResponseDto } from './dto/user-response.dto';
+import { UserAdminResponseDto } from './dto/user-admin-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,6 +30,7 @@ export class UsersController {
 
   @Get()
   @Roles(UserRoles.ADMIN)
+  @Serialize(UserAdminResponseDto)
   @ResponseMessage('Fetch user with paginate')
   findAll(
     @Query('current') currentPage: string,
