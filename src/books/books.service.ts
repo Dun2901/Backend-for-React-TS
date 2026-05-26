@@ -41,7 +41,10 @@ export class BooksService {
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
-      .populate(population)
+      .populate({
+        path: 'category',
+        select: 'name slug',
+      })
       .exec();
 
     return {
