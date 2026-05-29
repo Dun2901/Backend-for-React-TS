@@ -26,7 +26,7 @@ export class BooksService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, sort, population } = aqp(qs);
+    const { filter, sort } = aqp(qs);
     delete filter.current;
     delete filter.pageSize;
 
@@ -65,7 +65,7 @@ export class BooksService {
       );
     }
 
-    return await this.bookModel.findById(id);
+    return await this.bookModel.findById(id).populate('category');
   }
 
   async update(id: string, updateBookDto: UpdateBookDto, user: IUser) {
