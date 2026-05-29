@@ -72,8 +72,24 @@ export class FilesController {
     return this.filesService.update(+id, updateFileDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.filesService.remove(+id);
+  @Delete(':fileName')
+  @ResponseMessage('delete uploaded file')
+  deleteUploadedFile(
+    @Param('fileName') fileName: string,
+    @Headers('folder_type') folderType: string,
+  ) {
+    if (!fileName) {
+      throw new BadRequestException('fileName không được để trống');
+    }
+
+    if (!folderType) {
+      throw new BadRequestException('folder_type không được để trống');
+    }
+
+    if (!['book', 'avatar'].includes(folderType)) {
+      throw new BadRequestException('folder_type không hợp lệ');
+    }
+
+    return this.filesService.deleteUploadedFile(fileName, folderType);
   }
 }

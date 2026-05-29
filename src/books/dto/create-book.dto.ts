@@ -1,8 +1,7 @@
-import { BOOK_CATEGORY } from '@/enum';
 import {
   ArrayMinSize,
   IsArray,
-  IsEnum,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -35,7 +34,7 @@ export class CreateBookDto {
   @Min(0, { message: 'quantity phải lớn hơn hoặc bằng 0' })
   quantity: number;
 
-  @IsNotEmpty({ message: 'thumbnail không được để trống' })
-  @IsEnum(BOOK_CATEGORY, { message: 'category không tồn tại' })
+  @IsNotEmpty({ message: 'category không được để trống' })
+  @IsMongoId({ message: 'category không hợp lệ' })
   category: string;
 }

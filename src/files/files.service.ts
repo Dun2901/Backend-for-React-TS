@@ -1,11 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { CreateFileDto } from './dto/create-file.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { existsSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import { UpdateFileDto } from './dto/update-file.dto';
 
 @Injectable()
 export class FilesService {
-  create(createFileDto: CreateFileDto) {
-    return 'This action adds a new file';
+  deleteUploadedFile(fileName: string, folderType: string) {
+    const filePath = join(
+      process.cwd(),
+      'public',
+      'images',
+      folderType,
+      fileName,
+    );
+
+    if (!existsSync(filePath)) {
+      throw new BadRequestException('File không tồn tại');
+    }
+
+    unlinkSync(filePath);
+
+    return {
+      deleted: true,
+      fileName,
+    };
   }
 
   findAll() {
