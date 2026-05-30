@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
@@ -108,11 +104,7 @@ export class CartsService {
     }
   }
 
-  async updateItem(
-    userId: string,
-    bookId: string,
-    updateCartItemDto: UpdateCartItemDto,
-  ) {
+  async updateItem(userId: string, bookId: string, updateCartItemDto: UpdateCartItemDto) {
     const { quantity } = updateCartItemDto;
 
     if (!mongoose.Types.ObjectId.isValid(bookId)) {

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { Public, ResponseMessage, User } from '@/decorator/customize';
@@ -32,10 +23,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @ResponseMessage('User login')
-  handleLogin(
-    @User() user: IUser,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleLogin(@User() user: IUser, @Res({ passthrough: true }) response: Response) {
     return this.authService.login(user, response);
   }
 
@@ -80,10 +68,7 @@ export class AuthController {
   @Public()
   @Post('/logout')
   @ResponseMessage('Logout User')
-  handleLogout(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleLogout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = request.cookies['refresh_token'] as string;
 
     return this.authService.logout(refreshToken, response);
@@ -105,10 +90,7 @@ export class AuthController {
 
   @Patch('/change-password')
   @ResponseMessage('Change password')
-  changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @User() user: IUser,
-  ) {
+  changePassword(@Body() changePasswordDto: ChangePasswordDto, @User() user: IUser) {
     return this.authService.changePassword(changePasswordDto, user);
   }
 

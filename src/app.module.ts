@@ -12,6 +12,7 @@ import { BooksModule } from './books/books.module';
 import { FilesModule } from './files/files.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CartsModule } from './carts/carts.module';
+import { OrderModule } from '@/order/order.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CartsModule } from './carts/carts.module';
     FilesModule,
     CategoriesModule,
     CartsModule,
+    OrderModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
