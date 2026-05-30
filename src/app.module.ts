@@ -3,16 +3,16 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 import MongooseDelete from 'mongoose-delete';
-import { MailModule } from './mail/mail.module';
+import { MailModule } from './modules/mail/mail.module';
 import { DatabasesModule } from './databases/databases.module';
-import { BooksModule } from './books/books.module';
-import { FilesModule } from './files/files.module';
-import { CategoriesModule } from './categories/categories.module';
-import { CartsModule } from './carts/carts.module';
-import { OrderModule } from '@/order/order.module';
+import { BooksModule } from './modules/books/books.module';
+import { FilesModule } from './modules/files/files.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { CartsModule } from './modules/carts/carts.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { OrderModule } from '@/order/order.module';
     FilesModule,
     CategoriesModule,
     CartsModule,
-    OrderModule,
+    OrdersModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
