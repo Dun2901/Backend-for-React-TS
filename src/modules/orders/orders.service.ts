@@ -66,16 +66,11 @@ export class OrdersService {
      */
 
     if (currentStatus === nextStatus) {
-      throw new BadRequestException(
-        'Trạng thái mới phải khác trạng thái hiện tại',
-      );
+      throw new BadRequestException('Trạng thái mới phải khác trạng thái hiện tại');
     }
 
     if (currentStatus === OrderStatus.PENDING) {
-      if (
-        nextStatus !== OrderStatus.CONFIRMED &&
-        nextStatus !== OrderStatus.CANCELLED
-      ) {
+      if (nextStatus !== OrderStatus.CONFIRMED && nextStatus !== OrderStatus.CANCELLED) {
         throw new BadRequestException(
           'Đơn hàng đang chờ xác nhận chỉ có thể chuyển sang đã xác nhận hoặc đã hủy',
         );
@@ -85,10 +80,7 @@ export class OrdersService {
     }
 
     if (currentStatus === OrderStatus.CONFIRMED) {
-      if (
-        nextStatus !== OrderStatus.SHIPPING &&
-        nextStatus !== OrderStatus.CANCELLED
-      ) {
+      if (nextStatus !== OrderStatus.SHIPPING && nextStatus !== OrderStatus.CANCELLED) {
         throw new BadRequestException(
           'Đơn hàng đã xác nhận chỉ có thể chuyển sang đang giao hoặc đã hủy',
         );
@@ -114,16 +106,11 @@ export class OrdersService {
     }
 
     if (currentStatus === OrderStatus.CANCELLED) {
-      throw new BadRequestException(
-        'Đơn hàng đã hủy, không thể cập nhật trạng thái',
-      );
+      throw new BadRequestException('Đơn hàng đã hủy, không thể cập nhật trạng thái');
     }
   }
 
-  private async restoreOrderStock(
-    order: OrderDocument,
-    session: ClientSession,
-  ) {
+  private async restoreOrderStock(order: OrderDocument, session: ClientSession) {
     for (const item of order.items) {
       await this.bookModel.updateOne(
         { _id: item.bookId },
@@ -247,12 +234,7 @@ export class OrdersService {
     }
   }
 
-  async findMyOrders(
-    currentPage: number,
-    limit: number,
-    qs: string,
-    user: IUser,
-  ) {
+  async findMyOrders(currentPage: number, limit: number, qs: string, user: IUser) {
     const { filter } = aqp(qs);
 
     delete filter.current;
@@ -355,10 +337,7 @@ export class OrdersService {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      this.validateOrderStatusTransition(
-        order.status,
-        updateOrderStatusDto.status,
-      );
+      this.validateOrderStatusTransition(order.status, updateOrderStatusDto.status);
 
       if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
         await this.restoreOrderStock(order, session);
