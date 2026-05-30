@@ -3,12 +3,12 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { TransformInterceptor } from './interceptors/transform.interceptor';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
-import { GlobalExceptionFilter } from './exceptions/all-exception.filter';
-import { RolesGuard } from './auth/guards/roles.guard';
+import { GlobalExceptionFilter } from './common/exceptions/all-exception.filter';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

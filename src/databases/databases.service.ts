@@ -1,6 +1,6 @@
-import { Book, BookDocument } from '@/books/schemas/book.schema';
-import { User, UserDocument } from '@/users/schemas/user.schema';
-import { UsersService } from '@/users/users.service';
+import { Book, BookDocument } from '@/modules/books/schemas/book.schema';
+import { User, UserDocument } from '@/modules/users/schemas/user.schema';
+import { UsersService } from '@/modules/users/users.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,7 +9,7 @@ import { listBooks, listCategories, listUsers } from './init/sample.data';
 import {
   Category,
   CategoryDocument,
-} from '@/categories/schemas/category.schema';
+} from '@/modules/categories/schemas/category.schema';
 
 @Injectable()
 export class DatabasesService implements OnModuleInit {

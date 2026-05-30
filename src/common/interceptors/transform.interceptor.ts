@@ -1,0 +1,40 @@
+import { RESPONSE_MESSAGE } from '@/common/decorators/customize';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Response } from 'express';
+
+export interface ApiResponse<T> {
+  statusCode: number;
+  message?: string;
+  data: T;
+}
+
+@Injectable()
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
+  constructor(private reflector: Reflector) {}
+
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
+    return next.handle().pipe(
+      map((data: T) => ({
+        statusCode: context.switchToHttp().getResponse<Response>().statusCode,
+        message:
+          this.reflector.get<string>(RESPONSE_MESSAGE, context.getHandler()) ||
+          '',
+        data: data,
+      })),
+    );
+  }
+}
