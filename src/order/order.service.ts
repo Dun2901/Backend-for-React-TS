@@ -40,4 +40,50 @@ export class OrderService {
     );
     return saveOrder;
   }
+
+  //xem lịch sử đơn
+  async findOrderHistory(userId: string, query: string) {
+    const urlParams = new URLSearchParams(query);
+    const currentPage = parseInt(urlParams.get('current') || '1', 10);
+    const pageSize = parseInt(urlParams.get('pageSize') || '10', 10);
+    const skip = (currentPage - 1) * pageSize;
+
+    const totalItems = await this.orderModel.countDocuments({ userId: userId } as any);
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    const result = await this.orderModel
+      .find({ userId: userId } as any)
+      .skip(skip)
+      .limit(pageSize)
+      .sort({ createdAt: -1 })
+      .exec();
+
+    return {
+      meta: {
+        current: currentPage,
+        pageSize: pageSize,
+        pages: totalPages,
+        total: totalItems,
+      },
+      result,
+    };
+  }
+
+  // xem chi tiết đơn hàng
+  async findOrderById(orderId: string, userId: string) {
+    const order = await this.orderModel
+      .findOne({
+        _id: orderId,
+        userId: userId,
+      } as any)
+      .exec();
+
+    if (!order) {
+      throw new BadRequestException(
+        'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập đơn hàng này!',
+      );
+    }
+
+    return order;
+  }
 }
