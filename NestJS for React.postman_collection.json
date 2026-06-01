@@ -1597,40 +1597,6 @@
       "name": "Module order",
       "item": [
         {
-          "name": "Get my orders",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{backend_url}}/api/v1/orders/my-orders",
-              "host": [
-                "{{backend_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "orders",
-                "my-orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Get order detail",
           "request": {
             "auth": {
@@ -1832,6 +1798,90 @@
                 "v1",
                 "orders",
                 "checkout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module history",
+      "item": [
+        {
+          "name": "Get history",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDI4MzYwOCwiZXhwIjoxNzgwODgzNjA4fQ.S-lZlc77tH7MqHt5on2buv1GpO9blB98vM_PFhEedtU",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/history?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get history by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDI4MzYwOCwiZXhwIjoxNzgwODgzNjA4fQ.S-lZlc77tH7MqHt5on2buv1GpO9blB98vM_PFhEedtU",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/history/6a17b75532ef074f20b1681b",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "6a17b75532ef074f20b1681b"
               ]
             }
           },
