@@ -14,6 +14,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { CartsModule } from './modules/carts/carts.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { HistoryModule } from './modules/history/history.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { Connection } from 'mongoose';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { HistoryModule } from './modules/history/history.module';
     CartsModule,
     OrdersModule,
     HistoryModule,
+    PaymentsModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
@@ -34,7 +37,7 @@ import { HistoryModule } from './modules/history/history.module';
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URL'),
         // Thêm global plugin
-        connectionFactory: (connection) => {
+        connectionFactory: (connection: Connection) => {
           connection.plugin(MongooseDelete, {
             deletedAt: true,
             deletedBy: true,

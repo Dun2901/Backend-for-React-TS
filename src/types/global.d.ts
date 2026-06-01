@@ -21,6 +21,14 @@ declare global {
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_SECRET?: string;
     GOOGLE_REDIRECT_URL?: string;
+
+    VNPAY_TMN_CODE?: string;
+    VNPAY_SECURE_SECRET?: string;
+
+    VNPAY_URL?: string;
+    VNPAY_RETURN_URL?: string;
+    VNPAY_IPN_URL?: string;
+    VNPAY_TEST_MODE?: boolean;
   }
 
   interface IUser {

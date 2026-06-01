@@ -16,5 +16,6 @@ import { Book, BookSchema } from '@/modules/books/schemas/book.schema';
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
+  exports: [OrdersService],
 })
 export class OrdersModule {}

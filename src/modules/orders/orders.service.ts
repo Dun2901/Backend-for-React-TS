@@ -53,10 +53,7 @@ export class OrdersService {
     }
   }
 
-  private validateOrderStatusTransition(
-    currentStatus: OrderStatus,
-    nextStatus: OrderStatus,
-  ) {
+  private validateOrderStatusTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
     /*
      * PENDING   → CONFIRMED | CANCELLED
      * CONFIRMED → SHIPPING  | CANCELLED
@@ -66,16 +63,11 @@ export class OrdersService {
      */
 
     if (currentStatus === nextStatus) {
-      throw new BadRequestException(
-        'Trạng thái mới phải khác trạng thái hiện tại',
-      );
+      throw new BadRequestException('Trạng thái mới phải khác trạng thái hiện tại');
     }
 
     if (currentStatus === OrderStatus.PENDING) {
-      if (
-        nextStatus !== OrderStatus.CONFIRMED &&
-        nextStatus !== OrderStatus.CANCELLED
-      ) {
+      if (nextStatus !== OrderStatus.CONFIRMED && nextStatus !== OrderStatus.CANCELLED) {
         throw new BadRequestException(
           'Đơn hàng đang chờ xác nhận chỉ có thể chuyển sang đã xác nhận hoặc đã hủy',
         );
@@ -85,10 +77,7 @@ export class OrdersService {
     }
 
     if (currentStatus === OrderStatus.CONFIRMED) {
-      if (
-        nextStatus !== OrderStatus.SHIPPING &&
-        nextStatus !== OrderStatus.CANCELLED
-      ) {
+      if (nextStatus !== OrderStatus.SHIPPING && nextStatus !== OrderStatus.CANCELLED) {
         throw new BadRequestException(
           'Đơn hàng đã xác nhận chỉ có thể chuyển sang đang giao hoặc đã hủy',
         );
@@ -99,31 +88,22 @@ export class OrdersService {
 
     if (currentStatus === OrderStatus.SHIPPING) {
       if (nextStatus !== OrderStatus.COMPLETED) {
-        throw new BadRequestException(
-          'Đơn hàng đang giao chỉ có thể chuyển sang đã hoàn thành',
-        );
+        throw new BadRequestException('Đơn hàng đang giao chỉ có thể chuyển sang đã hoàn thành');
       }
 
       return;
     }
 
     if (currentStatus === OrderStatus.COMPLETED) {
-      throw new BadRequestException(
-        'Đơn hàng đã hoàn thành, không thể cập nhật trạng thái',
-      );
+      throw new BadRequestException('Đơn hàng đã hoàn thành, không thể cập nhật trạng thái');
     }
 
     if (currentStatus === OrderStatus.CANCELLED) {
-      throw new BadRequestException(
-        'Đơn hàng đã hủy, không thể cập nhật trạng thái',
-      );
+      throw new BadRequestException('Đơn hàng đã hủy, không thể cập nhật trạng thái');
     }
   }
 
-  private async restoreOrderStock(
-    order: OrderDocument,
-    session: ClientSession,
-  ) {
+  private async restoreOrderStock(order: OrderDocument, session: ClientSession) {
     for (const item of order.items) {
       await this.bookModel.updateOne(
         { _id: item.bookId },
@@ -186,9 +166,7 @@ export class OrdersService {
         );
 
         if (!updatedBook) {
-          throw new BadRequestException(
-            `Sách "${book.mainText}" không đủ số lượng trong kho`,
-          );
+          throw new BadRequestException(`Sách "${book.mainText}" không đủ số lượng trong kho`);
         }
 
         orderItems.push({
@@ -300,11 +278,7 @@ export class OrdersService {
     return order;
   }
 
-  async updateStatus(
-    id: string,
-    updateOrderStatusDto: UpdateOrderStatusDto,
-    user: IUser,
-  ) {
+  async updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto, user: IUser) {
     this.validateObjectId(id);
 
     const session = await this.connection.startSession();
@@ -316,10 +290,7 @@ export class OrdersService {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      this.validateOrderStatusTransition(
-        order.status,
-        updateOrderStatusDto.status,
-      );
+      this.validateOrderStatusTransition(order.status, updateOrderStatusDto.status);
 
       if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
         await this.restoreOrderStock(order, session);
@@ -368,9 +339,7 @@ export class OrdersService {
       this.assertCanAccessOrder(order, user);
 
       if (order.status !== OrderStatus.PENDING) {
-        throw new BadRequestException(
-          'Bạn chỉ có thể hủy đơn hàng khi đơn đang chờ xác nhận',
-        );
+        throw new BadRequestException('Bạn chỉ có thể hủy đơn hàng khi đơn đang chờ xác nhận');
       }
 
       await this.restoreOrderStock(order, session);
@@ -397,5 +366,23 @@ export class OrdersService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async findById(id: string) {
+    return this.orderModel.findById(id);
+  }
+
+  async findByOrderCode(orderCode: string) {
+    return this.orderModel.findOne({ orderCode });
+  }
+
+  async markPaid(orderId: string) {
+    return this.orderModel.findByIdAndUpdate(
+      orderId,
+      {
+        paymentStatus: PaymentStatus.PAID,
+      },
+      { returnDocument: 'after' },
+    );
   }
 }
