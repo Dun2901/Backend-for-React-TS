@@ -23,17 +23,6 @@ export class OrdersController {
     return this.ordersService.checkout(user, checkoutDto);
   }
 
-  @Get('my-orders')
-  @ResponseMessage('Lấy danh sách đơn hàng của tôi thành công')
-  findMyOrders(
-    @Query('current') currentPage: string,
-    @Query('pageSize') limit: string,
-    @Query() qs: string,
-    @User() user: IUser,
-  ) {
-    return this.ordersService.findMyOrders(+currentPage, +limit, qs, user);
-  }
-
   @Get()
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Lấy danh sách đơn hàng thành công')
@@ -46,6 +35,7 @@ export class OrdersController {
   }
 
   @Get(':id')
+  @Roles(UserRoles.ADMIN)
   @ResponseMessage('Lấy chi tiết đơn hàng thành công')
   findOne(@Param('id') id: string, @User() user: IUser) {
     return this.ordersService.findOne(id, user);

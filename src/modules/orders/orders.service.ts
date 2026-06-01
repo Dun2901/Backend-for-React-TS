@@ -247,45 +247,6 @@ export class OrdersService {
     }
   }
 
-  async findMyOrders(
-    currentPage: number,
-    limit: number,
-    qs: string,
-    user: IUser,
-  ) {
-    const { filter } = aqp(qs);
-
-    delete filter.current;
-    delete filter.pageSize;
-
-    filter.userId = user._id; // => ép query chỉ lấy order của user đang đăng nhập.
-
-    const defaultCurrentPage = currentPage || 1;
-    const defaultLimit = limit || 10;
-    const offset = (defaultCurrentPage - 1) * defaultLimit;
-
-    const totalItems = await this.orderModel.countDocuments(filter);
-    const totalPages = Math.ceil(totalItems / defaultLimit);
-
-    const result = await this.orderModel
-      .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
-      .sort({ createdAt: -1 })
-      .select('-deleted -items.deleted -shippingAddress.deleted')
-      .exec();
-
-    return {
-      meta: {
-        current: defaultCurrentPage,
-        pageSize: defaultLimit,
-        pages: totalPages,
-        total: totalItems,
-      },
-      result,
-    };
-  }
-
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort } = aqp(qs);
     delete filter.current;
