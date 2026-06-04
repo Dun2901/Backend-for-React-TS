@@ -1,24 +1,17 @@
-import {
-  RegisterUserDto,
-  VerifyCodeDto,
-} from '@/modules/users/dto/create-user.dto';
+import { RegisterUserDto, VerifyCodeDto } from '@/modules/users/dto/create-user.dto';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '@/modules/users/dto/password-user.dto';
 import { UsersService } from '@/modules/users/users.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import ms from 'ms';
 import { authTypeEnum } from '@/common/enums';
-import { User } from '@/modules/users/schemas/user.schema';
+import { User, UserDocument } from '@/modules/users/schemas/user.schema';
 import { compareToken, hashToken } from '@/common/helpers/token.helper';
 import { Types } from 'mongoose';
 
@@ -39,33 +32,23 @@ export class AuthService {
   ) {}
 
   // Username, pass là 2 tham số thư viện passport ném về
-  async validateUserLocal(
-    email: string,
-    pass: string,
-  ): Promise<Partial<User> | null> {
+  async validateUserLocal(email: string, pass: string): Promise<Partial<User> | null> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Thông tin đăng nhập không chính xác');
     }
     if (user?.accountType !== authTypeEnum.LOCAL) {
-      throw new BadRequestException(
-        `${email} address has registered via ${user?.accountType}!`,
-      );
+      throw new BadRequestException(`${email} address has registered via ${user?.accountType}!`);
     }
 
-    const isValid = await this.usersService.isValidPassword(
-      pass,
-      user.password,
-    );
+    const isValid = await this.usersService.isValidPassword(pass, user.password);
     if (!isValid) {
       throw new BadRequestException('Thông tin đăng nhập không chính xác');
     }
     return user;
   }
 
-  async validateUserGoogle(
-    googleUser: IGoogleUser,
-  ): Promise<Partial<User> | null> {
+  async validateUserGoogle(googleUser: IGoogleUser): Promise<UserDocument> {
     const user = await this.usersService.findByEmail(googleUser.email);
     if (user) {
       // Nếu user đã đăng ký LOCAL → không cho login Google
@@ -91,9 +74,7 @@ export class AuthService {
     // Set refresh_token as cookies
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      maxAge: ms(
-        this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue,
-      ),
+      maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue),
     });
 
     return {
@@ -152,9 +133,7 @@ export class AuthService {
   processNewToken = async (refreshToken: string, response: Response) => {
     try {
       if (!refreshToken) {
-        throw new BadRequestException(
-          'Không tìm thấy refresh token. Vui lòng login lại.',
-        );
+        throw new BadRequestException('Không tìm thấy refresh token. Vui lòng login lại.');
       }
 
       const payload = this.jwtService.verify<IJwtPayload>(refreshToken, {
@@ -163,9 +142,7 @@ export class AuthService {
 
       const user = await this.usersService.findByEmail(payload.email);
       if (!user || !user.hashedRefreshToken) {
-        throw new NotFoundException(
-          'Không tồn tại refresh_token ở database. Vui lòng login lại.',
-        );
+        throw new NotFoundException('Không tồn tại refresh_token ở database. Vui lòng login lại.');
       }
 
       const isMatch = await compareToken(refreshToken, user.hashedRefreshToken);
@@ -178,24 +155,16 @@ export class AuthService {
         });
       }
 
-      const { accessToken, refreshToken: newRefreshToken } =
-        await this.generateTokens(user);
+      const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(user);
 
       const newRefreshTokenHash = await hashToken(newRefreshToken);
 
-      await this.usersService.updateUserToken(
-        newRefreshTokenHash,
-        user._id.toString(),
-      );
+      await this.usersService.updateUserToken(newRefreshTokenHash, user._id.toString());
 
       response.clearCookie('refresh_token');
       response.cookie('refresh_token', newRefreshToken, {
         httpOnly: true,
-        maxAge: ms(
-          this.configService.get<string>(
-            'JWT_REFRESH_EXPIRE',
-          ) as ms.StringValue,
-        ),
+        maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue),
       });
 
       return {

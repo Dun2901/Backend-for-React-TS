@@ -18,11 +18,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: Profile,
-  ): Promise<any> {
+  async validate(accessToken: string, refreshToken: string, profile: Profile): Promise<any> {
     const googleUser: IGoogleUser = {
       fullName: profile.displayName,
       email: profile.emails?.[0]?.value ?? '',
@@ -31,6 +27,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.authService.validateUserGoogle(googleUser);
 
-    return { ...googleUser, ...user };
+    return {
+      _id: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      phone: user.phone,
+      avatar: user.avatar ?? googleUser.avatar,
+    };
   }
 }
