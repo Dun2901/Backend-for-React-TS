@@ -1,16 +1,13 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery } from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { QueryHistoryDto } from './dto/query-history.dto';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 
-const HISTORY_SELECT_FIELDS =
-  '-deleted -__v -items.deleted -shippingAddress.deleted';
+const HISTORY_SELECT_FIELDS = '-deleted -__v -items.deleted -shippingAddress.deleted';
+
+const HISTORY_ORDER_STATUSES = ['COMPLETED', 'CANCELLED'];
 
 @Injectable()
 export class HistoryService {
@@ -48,10 +45,7 @@ export class HistoryService {
   }
 
   async findOne(id: string, user: IUser) {
-    const order = await this.orderModel
-      .findById(id)
-      .select(HISTORY_SELECT_FIELDS)
-      .lean();
+    const order = await this.orderModel.findById(id).select(HISTORY_SELECT_FIELDS).lean();
 
     if (!order) {
       throw new NotFoundException('Đơn hàng không tồn tại');
@@ -77,6 +71,9 @@ export class HistoryService {
   private buildFilter(query: QueryHistoryDto, userId: string) {
     const filter: FilterQuery<OrderDocument> = {
       userId,
+      status: {
+        $in: HISTORY_ORDER_STATUSES,
+      },
     };
 
     this.applyStatusFilter(filter, query.status);
@@ -86,19 +83,17 @@ export class HistoryService {
     return filter;
   }
 
-  private applyStatusFilter(
-    filter: FilterQuery<OrderDocument>,
-    status?: string,
-  ) {
+  private applyStatusFilter(filter: FilterQuery<OrderDocument>, status?: string) {
     if (!status) return;
+
+    if (!HISTORY_ORDER_STATUSES.includes(status)) {
+      return;
+    }
 
     filter.status = status;
   }
 
-  private applyOrderCodeFilter(
-    filter: FilterQuery<OrderDocument>,
-    orderCode?: string,
-  ) {
+  private applyOrderCodeFilter(filter: FilterQuery<OrderDocument>, orderCode?: string) {
     if (!orderCode?.trim()) return;
 
     filter.orderCode = {
@@ -107,11 +102,7 @@ export class HistoryService {
     };
   }
 
-  private applyDateFilter(
-    filter: FilterQuery<OrderDocument>,
-    from?: string,
-    to?: string,
-  ) {
+  private applyDateFilter(filter: FilterQuery<OrderDocument>, from?: string, to?: string) {
     if (!from && !to) return;
 
     const dateFilter: {
