@@ -286,29 +286,46 @@ export class OrdersService {
 
     try {
       const order = await this.orderModel.findById(id).session(session);
+
       if (!order) {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      this.validateOrderStatusTransition(order.status, updateOrderStatusDto.status);
+      const newStatus = updateOrderStatusDto.status;
 
-      if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
+      this.validateOrderStatusTransition(order.status, newStatus);
+
+      if (newStatus === OrderStatus.CANCELLED) {
         await this.restoreOrderStock(order, session);
+      }
+
+      const updateData: Record<string, unknown> = {
+        status: newStatus,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      };
+
+      // Khi giao thành công đơn COD, xem như khách đã thanh toán
+      if (
+        newStatus === OrderStatus.COMPLETED &&
+        order.paymentMethod === PaymentMethod.COD &&
+        order.paymentStatus === PaymentStatus.UNPAID
+      ) {
+        updateData.paymentStatus = PaymentStatus.PAID;
       }
 
       const updatedOrder = await this.orderModel
         .findOneAndUpdate(
           { _id: id },
           {
-            status: updateOrderStatusDto.status,
-            updatedBy: {
-              _id: user._id,
-              email: user.email,
-            },
+            $set: updateData,
           },
           {
             returnDocument: 'after',
             session,
+            runValidators: true,
           },
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
