@@ -1,21 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { Public, ResponseMessage, User } from '@/common/decorators/customize';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import {
-  RegisterUserDto,
-  VerifyCodeDto,
-} from '@/modules/users/dto/create-user.dto';
+import { RegisterUserDto, VerifyCodeDto } from '@/modules/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
 import {
   ChangePasswordDto,
@@ -23,6 +11,8 @@ import {
   ResetPasswordDto,
 } from '@/modules/users/dto/password-user.dto';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
+import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { AccountResponseDto } from './dto/account-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -35,10 +25,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @ResponseMessage('User login')
-  handleLogin(
-    @User() user: IUser,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleLogin(@User() user: IUser, @Res({ passthrough: true }) response: Response) {
     return this.authService.login(user, response);
   }
 
@@ -62,19 +49,17 @@ export class AuthController {
     res.redirect(`http://localhost:3000?token=${access_token}`);
   }
 
-  @Get('/account')
-  @ResponseMessage('Get user information')
-  handleGetAccount(@User() user: IUser) {
-    return { user };
+  @Get('account')
+  @Serialize(AccountResponseDto)
+  @ResponseMessage('Get user account')
+  getAccount(@User() user: IUser) {
+    return this.authService.getAccount(user);
   }
 
   @Public()
   @Get('/refresh')
   @ResponseMessage('Get user refresh token')
-  handleRefreshToken(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleRefreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = request.cookies['refresh_token'] as string;
 
     return this.authService.processNewToken(refreshToken, response);
@@ -83,10 +68,7 @@ export class AuthController {
   @Public()
   @Post('/logout')
   @ResponseMessage('Logout User')
-  handleLogout(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleLogout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = request.cookies['refresh_token'] as string;
 
     return this.authService.logout(refreshToken, response);
@@ -108,10 +90,7 @@ export class AuthController {
 
   @Patch('/change-password')
   @ResponseMessage('Change password')
-  changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @User() user: IUser,
-  ) {
+  changePassword(@Body() changePasswordDto: ChangePasswordDto, @User() user: IUser) {
     return this.authService.changePassword(changePasswordDto, user);
   }
 
