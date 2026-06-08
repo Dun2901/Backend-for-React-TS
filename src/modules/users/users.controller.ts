@@ -31,6 +31,20 @@ export class UsersController {
     return this.usersService.findAll(+currentPage, +limit, qs);
   }
 
+  @Get('profile')
+  @Serialize(UserResponseDto)
+  @ResponseMessage('Fetch my profile')
+  getProfile(@User() user: IUser) {
+    return this.usersService.getProfile(user._id);
+  }
+
+  @Patch('profile')
+  @Serialize(UserResponseDto)
+  @ResponseMessage('Update my profile')
+  updateProfile(@Body() updateUserDto: UpdateUserDto, @User() user: IUser) {
+    return this.usersService.updateProfile(user._id, updateUserDto, user);
+  }
+
   @Get(':id')
   @Serialize(UserResponseDto)
   @ResponseMessage('Fetch user by id')

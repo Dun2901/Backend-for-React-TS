@@ -94,6 +94,14 @@ export class AuthService {
     return await this.usersService.register(registerUserDto);
   }
 
+  async getAccount(user: IUser) {
+    const currentUser = await this.usersService.getAccount(user._id);
+
+    return {
+      user: currentUser,
+    };
+  }
+
   createRefreshToken = (payload: any) => {
     const refresh_token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),

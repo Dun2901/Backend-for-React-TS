@@ -4,11 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  CreateUserDto,
-  RegisterUserDto,
-  VerifyCodeDto,
-} from './dto/create-user.dto';
+import { CreateUserDto, RegisterUserDto, VerifyCodeDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -19,11 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailService } from '@/modules/mail/mail.service';
 import aqp from 'api-query-params';
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  ResetPasswordDto,
-} from './dto/password-user.dto';
+import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
 import { authTypeEnum, UserRoles } from '@/common/enums';
 
 @Injectable()
@@ -47,9 +39,7 @@ export class UsersService {
       email: createUserDto.email,
     });
     if (isExist) {
-      throw new BadRequestException(
-        'Email đã tồn tại, vui lòng sử dụng email khác',
-      );
+      throw new BadRequestException('Email đã tồn tại, vui lòng sử dụng email khác');
     }
     const { password, ...rest } = createUserDto;
     const hashPassword = await this.getHashPassword(password);
@@ -124,6 +114,44 @@ export class UsersService {
     return user;
   }
 
+  async getProfile(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return user;
+  }
+
+  async updateProfile(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
+      { returnDocument: 'after' },
+    );
+
+    if (!updatedUser) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return updatedUser;
+  }
+
   async findByEmail(email: string) {
     if (!email) {
       throw new NotFoundException('user not found');
@@ -160,9 +188,7 @@ export class UsersService {
       user.email === 'user@gmail.com' ||
       user.email === 'guest@gmail.com'
     ) {
-      throw new BadRequestException(
-        'Định mệnh, xóa tài khoản này lấy gì mà test @@',
-      );
+      throw new BadRequestException('Định mệnh, xóa tài khoản này lấy gì mà test @@');
     }
 
     return await this.userModel.delete({ _id: id }, deletedBy);
@@ -174,9 +200,7 @@ export class UsersService {
     // Check email exist
     const isExist = await this.userModel.findOne({ email });
     if (isExist) {
-      throw new BadRequestException(
-        'Email đã tồn tại, vui lòng sử dụng email khác',
-      );
+      throw new BadRequestException('Email đã tồn tại, vui lòng sử dụng email khác');
     }
 
     // Hash password
@@ -209,6 +233,20 @@ export class UsersService {
     };
   }
 
+  async getAccount(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return user;
+  }
+
   updateUserToken = async (hashedRefreshToken: string | null, _id: string) => {
     return await this.userModel.findByIdAndUpdate(
       { _id },
@@ -232,17 +270,13 @@ export class UsersService {
     }
     // Kiểm tra code có đúng không
     if (user.codeId !== codeId) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // check code expire
     const isExpired = dayjs().isAfter(user.codeExpired);
     if (isExpired) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // Valid => update user
@@ -271,10 +305,7 @@ export class UsersService {
     const newCode = uuidv4();
     const newExpired = dayjs().add(5, 'minutes').toDate();
 
-    await this.userModel.updateOne(
-      { email },
-      { codeId: newCode, codeExpired: newExpired },
-    );
+    await this.userModel.updateOne({ email }, { codeId: newCode, codeExpired: newExpired });
 
     // send email
     this.mailService
@@ -348,9 +379,7 @@ export class UsersService {
 
     // Check confirm password
     if (confirmPassword !== newPassword) {
-      throw new BadRequestException(
-        'Mật khẩu/Xác nhận mật khẩu không chính xác.',
-      );
+      throw new BadRequestException('Mật khẩu/Xác nhận mật khẩu không chính xác.');
     }
 
     // Check mail
@@ -366,9 +395,7 @@ export class UsersService {
     const isNotExpired = dayjs().isBefore(user.passwordResetExpired);
 
     if (!isValidCode || !isNotExpired) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // Update password
