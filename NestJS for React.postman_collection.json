@@ -177,6 +177,11 @@
               "type": "bearer",
               "bearer": [
                 {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
                   "key": "undefined",
                   "type": "any"
                 }
@@ -192,18 +197,7 @@
             ],
             "body": {
               "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "username",
-                  "value": "dung@gmail.com",
-                  "type": "default"
-                },
-                {
-                  "key": "password",
-                  "value": "123456",
-                  "type": "default"
-                }
-              ]
+              "urlencoded": []
             },
             "url": {
               "raw": "{{backend_url}}/api/v1/auth/account",
@@ -502,6 +496,11 @@
               "type": "bearer",
               "bearer": [
                 {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
                   "key": "undefined",
                   "type": "any"
                 }
@@ -510,7 +509,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{backend_url}}/api/v1/users/69f0595be80345229d62f904",
+              "raw": "{{backend_url}}/api/v1/users/6a0f2852abd0bd1004dcfebb",
               "host": [
                 "{{backend_url}}"
               ],
@@ -518,7 +517,7 @@
                 "api",
                 "v1",
                 "users",
-                "69f0595be80345229d62f904"
+                "6a0f2852abd0bd1004dcfebb"
               ]
             },
             "description": "Lấy thông tin chi tiết của một người dùng theo ID.\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |"
@@ -701,6 +700,83 @@
               ]
             },
             "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        },
+        {
+          "name": "Get profile user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/profile",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update profile user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Dung test profile\",\r\n    \"phone\": \"2345678000000\",\r\n    \"avatar\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/profile",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
           },
           "response": []
         }
@@ -1723,7 +1799,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDU1NDA3MywiZXhwIjoxNzgxMTU0MDczfQ.U9PepK7KE2lcK9-32C8Fdzm2eEgYvPqIF4dNYGpaGX0",
                   "type": "string"
                 },
                 {
@@ -1747,13 +1823,11 @@
               "query": [
                 {
                   "key": "current",
-                  "value": "1",
-                  "type": "text"
+                  "value": "1"
                 },
                 {
                   "key": "pageSize",
-                  "value": "10",
-                  "type": "text"
+                  "value": "10"
                 }
               ]
             }
