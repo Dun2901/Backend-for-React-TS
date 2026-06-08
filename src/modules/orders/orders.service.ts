@@ -227,20 +227,24 @@ export class OrdersService {
 
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort } = aqp(qs);
+
     delete filter.current;
     delete filter.pageSize;
 
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
+    const current = Number(currentPage) || 1;
+    const pageSize = Number(limit) || 10;
+    const offset = (current - 1) * pageSize;
 
-    const totalItems = (await this.orderModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
+
+    const totalItems = await this.orderModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / pageSize);
 
     const result = await this.orderModel
       .find(filter)
       .skip(offset)
-      .limit(defaultLimit)
-      .sort(sort as any)
+      .limit(pageSize)
+      .sort(sortOption as any)
       .populate({
         path: 'userId',
         select: 'fullName email',
@@ -250,12 +254,12 @@ export class OrdersService {
 
     return {
       meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
+        current,
+        pageSize,
+        pages: totalPages,
+        total: totalItems,
       },
-      result, //kết quả query
+      result,
     };
   }
 
