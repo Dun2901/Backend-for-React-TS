@@ -19,7 +19,7 @@ import {
   VnpLocale,
 } from 'vnpay';
 import { OrdersService } from '../orders/orders.service';
-import { PaymentMethod, PaymentStatus } from '../orders/schemas/order.schema';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '../orders/schemas/order.schema';
 
 @Injectable()
 export class PaymentsService {
@@ -27,7 +27,7 @@ export class PaymentsService {
     private readonly vnpayService: VnpayService,
     private readonly configService: ConfigService<IConfigService>,
     private readonly ordersService: OrdersService,
-  ) {}
+  ) { }
 
   async createPaymentUrl(orderId: string, req: Request, user: IUser) {
     const order = await this.ordersService.findById(orderId);
@@ -42,6 +42,10 @@ export class PaymentsService {
 
     if (order.paymentMethod !== PaymentMethod.ONLINE) {
       throw new BadRequestException('Đơn hàng này không phải thanh toán online');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Chỉ có thể thanh toán đơn hàng đang chờ xác nhận');
     }
 
     if (order.paymentStatus === PaymentStatus.PAID) {
