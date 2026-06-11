@@ -1,7 +1,10 @@
 import { PaymentMethod } from '../schemas/order.schema';
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsEnum,
+  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -33,4 +36,10 @@ export class CheckoutDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsArray({ message: 'Danh sách sản phẩm được chọn không hợp lệ' })
+  @ArrayNotEmpty({ message: 'Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng' })
+  @IsMongoId({ each: true, message: 'Mã sản phẩm được chọn không hợp lệ' })
+  selectedBookIds?: string[];
 }

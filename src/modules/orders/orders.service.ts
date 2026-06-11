@@ -29,7 +29,8 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
-  ) { }
+  ) {}
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
   private validateObjectId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -48,9 +49,40 @@ export class OrdersService {
     if (user.role === (UserRoles.ADMIN as string)) {
       return;
     }
+
     if (order.userId.toString() !== user._id) {
       throw new ForbiddenException('Bạn không có quyền truy cập đơn hàng này');
     }
+  }
+
+  private getCartItemBookId(item: any) {
+    const bookValue = item.bookId;
+
+    if (bookValue?._id) {
+      return bookValue._id as mongoose.Types.ObjectId;
+    }
+
+    return bookValue as mongoose.Types.ObjectId;
+  }
+
+  private calculateCartTotals(
+    items: {
+      quantity: number;
+      priceAtAdd: number;
+    }[],
+  ) {
+    return items.reduce(
+      (result, item) => {
+        result.totalItems += item.quantity;
+        result.totalPrice += item.quantity * item.priceAtAdd;
+
+        return result;
+      },
+      {
+        totalItems: 0,
+        totalPrice: 0,
+      },
+    );
   }
 
   private validateOrderStatusTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
@@ -117,6 +149,7 @@ export class OrdersService {
       );
     }
   }
+
   // ─── Queries ─────────────────────────────────────────────────────────────
   async checkout(user: IUser, checkoutDto: CheckoutDto) {
     const session = await this.connection.startSession();
@@ -132,6 +165,23 @@ export class OrdersService {
         throw new BadRequestException('Giỏ hàng đang trống');
       }
 
+      const selectedBookIdSet =
+        checkoutDto.selectedBookIds && checkoutDto.selectedBookIds.length > 0
+          ? new Set(checkoutDto.selectedBookIds)
+          : new Set(cart.items.map((item) => this.getCartItemBookId(item).toString()));
+
+      const selectedCartItems = cart.items.filter((item) =>
+        selectedBookIdSet.has(this.getCartItemBookId(item).toString()),
+      );
+
+      if (selectedCartItems.length === 0) {
+        throw new BadRequestException('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng');
+      }
+
+      if (selectedBookIdSet.size > selectedCartItems.length) {
+        throw new BadRequestException('Một số sản phẩm được chọn không có trong giỏ hàng');
+      }
+
       const orderItems: {
         bookId: mongoose.Types.ObjectId;
         bookName: string;
@@ -142,8 +192,9 @@ export class OrdersService {
 
       let totalPrice = 0;
 
-      for (const item of cart.items) {
+      for (const item of selectedCartItems) {
         const book = item.bookId as unknown as BookDocument;
+
         if (!book) {
           throw new NotFoundException('Sách không tồn tại');
         }
@@ -197,13 +248,23 @@ export class OrdersService {
         { session },
       );
 
+      const remainingCartItems = cart.items
+        .filter((item) => !selectedBookIdSet.has(this.getCartItemBookId(item).toString()))
+        .map((item) => ({
+          bookId: this.getCartItemBookId(item),
+          quantity: item.quantity,
+          priceAtAdd: item.priceAtAdd,
+        }));
+
+      const remainingCartTotals = this.calculateCartTotals(remainingCartItems);
+
       await this.cartModel.updateOne(
         { userId: user._id },
         {
           $set: {
-            items: [],
-            totalItems: 0,
-            totalPrice: 0,
+            items: remainingCartItems,
+            totalItems: remainingCartTotals.totalItems,
+            totalPrice: remainingCartTotals.totalPrice,
           },
         },
         { session },
@@ -304,20 +365,24 @@ export class OrdersService {
 
   async findOne(id: string, user: IUser) {
     this.validateObjectId(id);
+
     const order = await this.orderModel
       .findById(id)
       .select('-deleted -items.deleted -shippingAddress.deleted');
+
     if (!order) {
       throw new NotFoundException('Đơn hàng không tồn tại');
     }
 
     this.assertCanAccessOrder(order, user);
+
     if (user.role === (UserRoles.ADMIN as string)) {
       await order.populate({
         path: 'userId',
         select: 'fullName email',
       });
     }
+
     return order;
   }
 
@@ -392,6 +457,7 @@ export class OrdersService {
 
     try {
       const order = await this.orderModel.findById(id).session(session);
+
       if (!order) {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
