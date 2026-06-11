@@ -18,8 +18,9 @@ import {
   ReturnQueryFromVNPay,
   VnpLocale,
 } from 'vnpay';
+import { getVnpayReturnUrl } from '@/common/utils/app-url.util';
 import { OrdersService } from '../orders/orders.service';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '../orders/schemas/order.schema';
+import { PaymentMethod, PaymentStatus } from '../orders/schemas/order.schema';
 
 @Injectable()
 export class PaymentsService {
@@ -27,7 +28,7 @@ export class PaymentsService {
     private readonly vnpayService: VnpayService,
     private readonly configService: ConfigService<IConfigService>,
     private readonly ordersService: OrdersService,
-  ) { }
+  ) {}
 
   async createPaymentUrl(orderId: string, req: Request, user: IUser) {
     const order = await this.ordersService.findById(orderId);
@@ -42,10 +43,6 @@ export class PaymentsService {
 
     if (order.paymentMethod !== PaymentMethod.ONLINE) {
       throw new BadRequestException('Đơn hàng này không phải thanh toán online');
-    }
-
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Chỉ có thể thanh toán đơn hàng đang chờ xác nhận');
     }
 
     if (order.paymentStatus === PaymentStatus.PAID) {
@@ -63,7 +60,7 @@ export class PaymentsService {
       vnp_TxnRef: order.orderCode,
       vnp_OrderInfo: `Thanh toan don hang ${order.orderCode}`,
       vnp_OrderType: ProductCode.Other,
-      vnp_ReturnUrl: this.configService.getOrThrow<string>('VNPAY_RETURN_URL'),
+      vnp_ReturnUrl: getVnpayReturnUrl(this.configService),
       vnp_Locale: VnpLocale.VN,
     });
 

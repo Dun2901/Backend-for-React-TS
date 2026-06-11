@@ -9,13 +9,17 @@ import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { GlobalExceptionFilter } from './common/exceptions/all-exception.filter';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { getClientUrl } from './common/utils/app-url.util';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const configService = app.get(ConfigService);
+  const configService = app.get<ConfigService<IConfigService>>(ConfigService);
+
   const port = configService.get<number>('PORT') || 8081;
+  const clientUrl = getClientUrl(configService);
 
   const reflector = app.get(Reflector);
+
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
   app.useGlobalPipes(
     new ValidationPipe({
@@ -32,7 +36,7 @@ async function bootstrap() {
 
   // Config CORS
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [clientUrl, 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     credentials: true,

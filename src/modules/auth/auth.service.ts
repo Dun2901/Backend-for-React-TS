@@ -51,16 +51,22 @@ export class AuthService {
   async validateUserGoogle(googleUser: IGoogleUser): Promise<UserDocument> {
     const user = await this.usersService.findByEmail(googleUser.email);
     if (user) {
-      // Nếu user đã đăng ký LOCAL → không cho login Google
       if (user.accountType !== authTypeEnum.GOOGLE) {
         throw new BadRequestException(
           `${googleUser.email} address has registered via ${user.accountType}!`,
         );
       }
+
+      // Sync avatar mới nhất từ Google
+      const freshAvatar = googleUser.avatar !== 'default-google.png' ? googleUser.avatar : null;
+      if (freshAvatar && user.avatar !== freshAvatar) {
+        user.avatar = freshAvatar;
+        await user.save();
+      }
+
       return user;
     }
-    const newUser = await this.usersService.createUserWithGoogle(googleUser);
-    return newUser;
+    return await this.usersService.createUserWithGoogle(googleUser);
   }
 
   async login(user: IUser, response: Response) {

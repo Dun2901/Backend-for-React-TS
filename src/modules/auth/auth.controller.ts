@@ -13,11 +13,12 @@ import {
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { AccountResponseDto } from './dto/account-response.dto';
+import { buildClientRedirectUrl } from '@/common/utils/app-url.util';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService<IConfigService>,
     private authService: AuthService,
   ) {}
 
@@ -46,7 +47,12 @@ export class AuthController {
   @UseGuards(GoogleOauthGuard)
   async googleCallBack(@User() user: IUser, @Res() res: Response) {
     const { access_token } = await this.authService.login(user, res);
-    res.redirect(`http://localhost:3000?token=${access_token}`);
+
+    const redirectUrl = buildClientRedirectUrl(this.configService, '/', {
+      token: access_token,
+    });
+
+    return res.redirect(redirectUrl);
   }
 
   @Get('account')

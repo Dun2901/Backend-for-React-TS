@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { CheckoutDto } from './dto/checkout.dto';
@@ -15,7 +7,7 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @Post('checkout')
   @ResponseMessage('Đặt hàng thành công')
@@ -32,6 +24,17 @@ export class OrdersController {
     @Query() qs: string,
   ) {
     return this.ordersService.findAll(+currentPage, +limit, qs);
+  }
+
+  @Get('my')
+  @ResponseMessage('Lấy danh sách đơn hàng của tôi thành công')
+  findMyOrders(
+    @Query('current') currentPage: string,
+    @Query('pageSize') limit: string,
+    @Query() qs: string,
+    @User() user: IUser,
+  ) {
+    return this.ordersService.findMyOrders(+currentPage, +limit, qs, user);
   }
 
   @Get(':id')
