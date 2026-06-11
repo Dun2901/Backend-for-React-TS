@@ -5,6 +5,9 @@ declare global {
     PORT?: number;
     MONGODB_URL?: string;
 
+    CLIENT_URL?: string;
+    SERVER_URL?: string;
+
     JWT_ACCESS_SECRET?: string;
     JWT_ACCESS_EXPIRE?: string | number;
     JWT_REFRESH_SECRET?: string;
