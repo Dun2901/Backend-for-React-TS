@@ -29,7 +29,7 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
-  ) {}
+  ) { }
   // ─── Helpers ──────────────────────────────────────────────────────────────
   private validateObjectId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -249,6 +249,45 @@ export class OrdersService {
         path: 'userId',
         select: 'fullName email',
       })
+      .select('-deleted -items.deleted -shippingAddress.deleted')
+      .exec();
+
+    return {
+      meta: {
+        current,
+        pageSize,
+        pages: totalPages,
+        total: totalItems,
+      },
+      result,
+    };
+  }
+
+  async findMyOrders(currentPage: number, limit: number, qs: string, user: IUser) {
+    const { filter, sort } = aqp(qs);
+
+    delete filter.current;
+    delete filter.pageSize;
+
+    const current = Number(currentPage) || 1;
+    const pageSize = Number(limit) || 10;
+    const offset = (current - 1) * pageSize;
+
+    const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
+
+    const finalFilter = {
+      ...filter,
+      userId: user._id,
+    };
+
+    const totalItems = await this.orderModel.countDocuments(finalFilter);
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    const result = await this.orderModel
+      .find(finalFilter)
+      .skip(offset)
+      .limit(pageSize)
+      .sort(sortOption as any)
       .select('-deleted -items.deleted -shippingAddress.deleted')
       .exec();
 
