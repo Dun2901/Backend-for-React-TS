@@ -17,6 +17,7 @@ import { MailService } from '@/modules/mail/mail.service';
 import aqp from 'api-query-params';
 import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
 import { authTypeEnum, UserRoles } from '@/common/enums';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 
 @Injectable()
 export class UsersService {
@@ -65,16 +66,17 @@ export class UsersService {
     delete filter.current;
     delete filter.pageSize;
 
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
 
-    const totalItems = (await this.userModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const totalItems = await this.userModel.countDocuments(filter);
 
     const result = await this.userModel
       .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
+      .skip(skip)
+      .limit(pageSize)
       .sort(sort as any)
       // .select([
       //   '-password',
@@ -90,13 +92,12 @@ export class UsersService {
       .exec();
 
     return {
-      meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
-      },
-      result, //kết quả query
+      meta: getPaginationMeta({
+        current,
+        pageSize,
+        total: totalItems,
+      }),
+      result,
     };
   }
 

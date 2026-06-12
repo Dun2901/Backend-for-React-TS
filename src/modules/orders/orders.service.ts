@@ -21,6 +21,7 @@ import { UserRoles } from '@/common/enums';
 import { v4 as uuidv4 } from 'uuid';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CheckoutDto } from './dto/checkout.dto';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 
 @Injectable()
 export class OrdersService {
@@ -292,18 +293,18 @@ export class OrdersService {
     delete filter.current;
     delete filter.pageSize;
 
-    const current = Number(currentPage) || 1;
-    const pageSize = Number(limit) || 10;
-    const offset = (current - 1) * pageSize;
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
+
+    const totalItems = await this.bookModel.countDocuments(filter);
 
     const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
 
-    const totalItems = await this.orderModel.countDocuments(filter);
-    const totalPages = Math.ceil(totalItems / pageSize);
-
     const result = await this.orderModel
       .find(filter)
-      .skip(offset)
+      .skip(skip)
       .limit(pageSize)
       .sort(sortOption as any)
       .populate({
@@ -314,12 +315,11 @@ export class OrdersService {
       .exec();
 
     return {
-      meta: {
+      meta: getPaginationMeta({
         current,
         pageSize,
-        pages: totalPages,
         total: totalItems,
-      },
+      }),
       result,
     };
   }
