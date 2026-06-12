@@ -32,6 +32,14 @@ declare global {
     VNPAY_RETURN_URL?: string;
     VNPAY_IPN_URL?: string;
     VNPAY_TEST_MODE?: boolean;
+
+    CLOUDINARY_CLOUD_NAME?: string;
+    CLOUDINARY_API_KEY?: string;
+    CLOUDINARY_API_SECRET?: string;
+    CLOUDINARY_AVATAR_FOLDER?: string;
+    CLOUDINARY_BOOK_FOLDER?: string;
+    CLOUDINARY_REVIEW_FOLDER?: string;
+    CLOUDINARY_ROOT_FOLDER?: string;
   }
 
   interface IUser {
