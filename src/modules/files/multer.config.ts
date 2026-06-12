@@ -1,76 +1,57 @@
-import { diskStorage } from 'Multer';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import {
-  MulterModuleOptions,
-  MulterOptionsFactory,
-} from '@nestjs/platform-express';
-import fs from 'fs';
-import path, { join } from 'path';
+import { MulterModuleOptions, MulterOptionsFactory } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+
+const MAX_UPLOAD_SIZE = 1024 * 1024 * 50; // 50MB
+
+type MulterFileLike = {
+  mimetype?: string;
+};
 
 @Injectable()
 export class MulterConfigService implements MulterOptionsFactory {
-  getRootPath = () => {
-    return process.cwd();
-  };
+  private getFolderType(req: any) {
+    return (req?.headers?.folder_type as string) ?? '';
+  }
 
-  ensureExists(targetDirectory: string) {
-    fs.mkdir(targetDirectory, { recursive: true }, (error) => {
-      if (!error) {
-        console.log('Directory successfully created, or it already exists.');
-        return;
-      }
-      switch (error.code) {
-        case 'EEXIST':
-          // Error:
-          // Requested location already exists, but it's not a directory.
-          break;
-        case 'ENOTDIR':
-          // Error:
-          // The parent hierarchy contains a file with the same name as the dir
-          // you're trying to create.
-          break;
-        default:
-          // Some other error like permission denied.
-          console.error(error);
-          break;
-      }
-    });
+  private isImage(file: MulterFileLike) {
+    return /^image\//.test(file?.mimetype ?? '');
+  }
+
+  private isVideo(file: MulterFileLike) {
+    return /^video\//.test(file?.mimetype ?? '');
   }
 
   createMulterOptions(): MulterModuleOptions {
     return {
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          const folder = (req?.headers?.folder_type as string) ?? 'default';
-          this.ensureExists(`public/images/${folder}`);
-          cb(null, join(this.getRootPath(), `public/images/${folder}`));
-        },
-        filename: (req, file, cb) => {
-          //get image extension
-          const extName = path.extname(file.originalname);
+      storage: memoryStorage(),
 
-          //get image's name (without extension)
-          const baseName = path.basename(file.originalname, extName);
-
-          const finalName = `${baseName}-${Date.now()}${extName}`;
-          cb(null, finalName);
-        },
-      }),
       fileFilter: (req, file, cb) => {
-        const isValidFileType = /^image\//.test(file?.mimetype ?? '');
+        const folderType = this.getFolderType(req);
 
-        if (!isValidFileType) {
+        const isImage = this.isImage(file);
+        const isVideo = this.isVideo(file);
+
+        const canUploadAvatar = folderType === 'avatar' && isImage;
+        const canUploadBook = folderType === 'book' && isImage;
+        const canUploadReview = folderType === 'review' && (isImage || isVideo);
+
+        if (!canUploadAvatar && !canUploadBook && !canUploadReview) {
           cb(
             new HttpException(
-              'Invalid file type. Only image files are allowed',
+              'File không hợp lệ. Avatar/book chỉ upload ảnh. Review upload ảnh hoặc video.',
               HttpStatus.UNPROCESSABLE_ENTITY,
             ),
             false,
           );
-        } else cb(null, true);
+          return;
+        }
+
+        cb(null, true);
       },
+
       limits: {
-        fileSize: 1024 * 1024 * 1, // 1MB
+        fileSize: MAX_UPLOAD_SIZE,
       },
     };
   }

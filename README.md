@@ -1,95 +1,262 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# BookStore Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend cho website bán sách, xây dựng bằng **NestJS**, **MongoDB**, **JWT**, **Google OAuth**, **VNPay Sandbox** và **Cloudinary**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Công nghệ sử dụng
 
-## Description
+- NestJS
+- MongoDB + Mongoose
+- JWT Authentication
+- Google OAuth
+- Nodemailer
+- VNPay Sandbox
+- Cloudinary
+- TypeScript
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Cài đặt dự án
 
 ```bash
-# 1. Clone
+# 1. Clone project
 git clone https://github.com/Dun2901/Backend-for-React-TS.git
+
+# 2. Di chuyển vào thư mục dự án
 cd Backend-for-React-TS
 
-# 2. Install dependencies
+# 3. Cài dependencies
 npm install
 
-# 3. Copy env
+# 4. Tạo file môi trường
 cp .env.example .env
-# Edit .env xem ở phần giải thích
 
-# 4. Chạy dự án
+# 5. Chạy dự án
 npm run dev
 ```
 
-### `.env.example` File Template
+Server mặc định chạy tại:
 
 ```text
-# Server config
+http://localhost:8081
+```
+
+---
+
+## File `.env.example`
+
+```env
 PORT=8081
 MONGODB_URL=
 
-# Config JWT
+# JWT
 JWT_ACCESS_SECRET=
-JWT_ACCESS_EXPIRE=
+JWT_ACCESS_EXPIRE=15m
 
 JWT_REFRESH_SECRET=
-JWT_REFRESH_EXPIRE=
+JWT_REFRESH_EXPIRE=7d
 
-# Init sample data
+# Seed data
 SHOULD_INIT=true
-INIT_PASSWORD=
+INIT_PASSWORD=123456
 
-# Config EMAIL
+# Email
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=465
 MAIL_USER=
 MAIL_PASS=
+
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_SECRET=
+GOOGLE_REDIRECT_URL=http://localhost:8081/api/v1/auth/google/redirect
+
+# VNPay Sandbox
+VNPAY_TMN_CODE=
+VNPAY_SECURE_SECRET=
+VNPAY_URL=
+VNPAY_RETURN_URL=http://localhost:3000/payment/vnpay-return
+VNPAY_IPN_URL=http://localhost:8081/api/v1/payments/vnpay-ipn
+VNPAY_TEST_MODE=true
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+CLOUDINARY_AVATAR_FOLDER=bookstore/avatar
+CLOUDINARY_BOOK_FOLDER=bookstore/books
+CLOUDINARY_REVIEW_FOLDER=bookstore/reviews
+CLOUDINARY_ROOT_FOLDER=bookstore
 ```
 
-### Giải thích các biến môi trường
+---
 
-**Server**
+## Giải thích biến môi trường quan trọng
 
-- `PORT` — Cổng chạy server (mặc định `8081`)
-- `MONGODB_URL` — Connection string MongoDB, ví dụ: `mongodb://localhost:27017/mydb`
+### Server
 
-**JWT**
+| Biến          | Ý nghĩa                                |
+| ------------- | -------------------------------------- |
+| `PORT`        | Cổng chạy backend. Mặc định là `8081`. |
+| `MONGODB_URL` | Connection string để kết nối MongoDB.  |
 
-- `JWT_ACCESS_SECRET` — Chuỗi bí mật để ký access token (đặt càng dài càng an toàn)
-- `JWT_ACCESS_EXPIRE` — Thời hạn access token, ví dụ: `15m`
-- `JWT_REFRESH_SECRET` — Chuỗi bí mật để ký refresh token
-- `JWT_REFRESH_EXPIRE` — Thời hạn refresh token, ví dụ: `7d`
+Ví dụ MongoDB local:
 
-**Init sample data**
+```env
+MONGODB_URL=mongodb://localhost:27017/bookstore
+```
 
-- `SHOULD_INIT` — `true` nếu muốn seed dữ liệu mẫu lúc khởi động, `false` nếu không
-- `INIT_PASSWORD` — Password mặc định cho các tài khoản được seed đặt là 123456 đều được
+Ví dụ MongoDB Atlas:
 
-**Email**
+```env
+MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/bookstore
+```
 
-- `MAIL_HOST` — SMTP host (mặc định Gmail: `smtp.gmail.com`)
-- `MAIL_PORT` — SMTP port (mặc định Gmail: `465`)
-- `MAIL_USER` — Gmail dùng để gửi mail
-- `MAIL_PASS` — App Password của Gmail ([hướng dẫn tạo](https://myaccount.google.com/apppasswords))
+---
+
+### JWT
+
+| Biến                 | Ý nghĩa                                       |
+| -------------------- | --------------------------------------------- |
+| `JWT_ACCESS_SECRET`  | Secret dùng để ký access token.               |
+| `JWT_ACCESS_EXPIRE`  | Thời gian sống của access token, ví dụ `15m`. |
+| `JWT_REFRESH_SECRET` | Secret dùng để ký refresh token.              |
+| `JWT_REFRESH_EXPIRE` | Thời gian sống của refresh token, ví dụ `7d`. |
+
+Ví dụ:
+
+```env
+JWT_ACCESS_EXPIRE=15m
+JWT_REFRESH_EXPIRE=7d
+```
+
+Nên đặt `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` là chuỗi dài, khó đoán.
+
+---
+
+### Seed data
+
+| Biến            | Ý nghĩa                                                 |
+| --------------- | ------------------------------------------------------- |
+| `SHOULD_INIT`   | `true` nếu muốn tự động tạo dữ liệu mẫu khi chạy dự án. |
+| `INIT_PASSWORD` | Mật khẩu mặc định cho các tài khoản được seed.          |
+
+Ví dụ:
+
+```env
+SHOULD_INIT=true
+INIT_PASSWORD=123456
+```
+
+Sau khi seed xong, có thể đổi:
+
+```env
+SHOULD_INIT=false
+```
+
+để tránh tạo lại dữ liệu mẫu.
+
+---
+
+### Email
+
+| Biến        | Ý nghĩa                                 |
+| ----------- | --------------------------------------- |
+| `MAIL_HOST` | SMTP host dùng để gửi mail.             |
+| `MAIL_PORT` | SMTP port. Với Gmail thường dùng `465`. |
+| `MAIL_USER` | Email dùng để gửi mã xác thực.          |
+| `MAIL_PASS` | App Password của Gmail.                 |
+
+Nếu dùng Gmail, cần tạo **App Password**, không dùng mật khẩu đăng nhập Gmail thường.
+
+Ví dụ:
+
+```env
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USER=your_email@gmail.com
+MAIL_PASS=your_app_password
+```
+
+---
+
+### Google OAuth
+
+| Biến                  | Ý nghĩa                                             |
+| --------------------- | --------------------------------------------------- |
+| `GOOGLE_CLIENT_ID`    | Client ID lấy từ Google Cloud Console.              |
+| `GOOGLE_SECRET`       | Client Secret lấy từ Google Cloud Console.          |
+| `GOOGLE_REDIRECT_URL` | URL backend nhận callback sau khi đăng nhập Google. |
+
+Khi chạy local, thường để:
+
+```env
+GOOGLE_REDIRECT_URL=http://localhost:8081/api/v1/auth/google/redirect
+```
+
+URL này phải khớp với phần **Authorized redirect URIs** trong Google Cloud Console.
+
+---
+
+### VNPay Sandbox
+
+| Biến                  | Ý nghĩa                                       |
+| --------------------- | --------------------------------------------- |
+| `VNPAY_TMN_CODE`      | Mã website do VNPay Sandbox cấp.              |
+| `VNPAY_SECURE_SECRET` | Secret key do VNPay Sandbox cấp.              |
+| `VNPAY_URL`           | URL thanh toán sandbox của VNPay.             |
+| `VNPAY_RETURN_URL`    | URL frontend nhận kết quả sau khi thanh toán. |
+| `VNPAY_IPN_URL`       | URL backend nhận IPN từ VNPay.                |
+| `VNPAY_TEST_MODE`     | `true` nếu đang dùng môi trường test.         |
+
+Ví dụ khi chạy local:
+
+```env
+VNPAY_RETURN_URL=http://localhost:3000/payment/vnpay-return
+VNPAY_IPN_URL=http://localhost:8081/api/v1/payments/vnpay-ipn
+VNPAY_TEST_MODE=true
+```
+
+Lưu ý: `VNPAY_RETURN_URL` là URL của frontend, còn `VNPAY_IPN_URL` là URL của backend.
+
+---
+
+### Cloudinary
+
+| Biến                       | Ý nghĩa                                  |
+| -------------------------- | ---------------------------------------- |
+| `CLOUDINARY_CLOUD_NAME`    | Cloud name trong tài khoản Cloudinary.   |
+| `CLOUDINARY_API_KEY`       | API key của Cloudinary.                  |
+| `CLOUDINARY_API_SECRET`    | API secret của Cloudinary.               |
+| `CLOUDINARY_AVATAR_FOLDER` | Thư mục lưu ảnh avatar.                  |
+| `CLOUDINARY_BOOK_FOLDER`   | Thư mục lưu ảnh sách.                    |
+| `CLOUDINARY_REVIEW_FOLDER` | Thư mục lưu ảnh đánh giá.                |
+| `CLOUDINARY_ROOT_FOLDER`   | Thư mục gốc của project trên Cloudinary. |
+
+Ví dụ:
+
+```env
+CLOUDINARY_AVATAR_FOLDER=bookstore/avatar
+CLOUDINARY_BOOK_FOLDER=bookstore/books
+CLOUDINARY_REVIEW_FOLDER=bookstore/reviews
+CLOUDINARY_ROOT_FOLDER=bookstore
+```
+
+---
+
+## Ghi chú khi chạy dự án
+
+- Đảm bảo MongoDB đang chạy hoặc `MONGODB_URL` đã trỏ đúng đến MongoDB Atlas.
+- Nếu dùng đăng nhập Google, cần cấu hình đúng `GOOGLE_REDIRECT_URL`.
+- Nếu dùng thanh toán VNPay, cần điền đầy đủ thông tin sandbox.
+- Nếu upload ảnh, cần cấu hình Cloudinary.
+- Không commit file `.env` lên GitHub.
+
+---
+
+## Scripts
+
+```bash
+# Chạy dev
+npm run dev
+```

@@ -26,6 +26,7 @@ export class BooksService {
 
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort } = aqp(qs);
+
     delete filter.current;
     delete filter.pageSize;
 
@@ -34,18 +35,25 @@ export class BooksService {
       limit,
     });
 
-    const totalItems = await this.bookModel.countDocuments(filter);
+    const finalSort = {
+      ...(sort as Record<string, 1 | -1>),
+      _id: -1 as const,
+    };
 
-    const result = await this.bookModel
-      .find(filter)
-      .skip(skip)
-      .limit(pageSize)
-      .sort(sort as any)
-      .populate({
-        path: 'category',
-        select: 'name slug',
-      })
-      .exec();
+    const [result, totalItems] = await Promise.all([
+      this.bookModel
+        .find(filter)
+        .skip(skip)
+        .limit(pageSize)
+        .sort(finalSort)
+        .populate({
+          path: 'category',
+          select: 'name slug',
+        })
+        .exec(),
+
+      this.bookModel.countDocuments(filter),
+    ]);
 
     return {
       meta: getPaginationMeta({
