@@ -4,6 +4,7 @@ import { FilterQuery } from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { QueryHistoryDto } from './dto/query-history.dto';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 
 const HISTORY_SELECT_FIELDS = '-deleted -__v -items.deleted -shippingAddress.deleted';
 
@@ -17,7 +18,10 @@ export class HistoryService {
   ) {}
 
   async findMyOrders(query: QueryHistoryDto, user: IUser) {
-    const { current, pageSize, skip } = this.getPagination(query);
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage: query.current,
+      limit: query.pageSize,
+    });
 
     const filter = this.buildFilter(query, user._id);
 
@@ -34,12 +38,11 @@ export class HistoryService {
     ]);
 
     return {
-      meta: {
+      meta: getPaginationMeta({
         current,
         pageSize,
-        pages: Math.ceil(total / pageSize),
         total,
-      },
+      }),
       result,
     };
   }
@@ -54,18 +57,6 @@ export class HistoryService {
     this.checkOrderOwner(order, user._id);
 
     return order;
-  }
-
-  private getPagination(query: QueryHistoryDto) {
-    const current = query.current ?? 1;
-    const pageSize = query.pageSize ?? 10;
-    const skip = (current - 1) * pageSize;
-
-    return {
-      current,
-      pageSize,
-      skip,
-    };
   }
 
   private buildFilter(query: QueryHistoryDto, userId: string) {

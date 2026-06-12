@@ -6,12 +6,11 @@ import { Book, BookDocument } from './schemas/book.schema';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 
 @Injectable()
 export class BooksService {
-  constructor(
-    @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
-  ) {}
+  constructor(@InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>) {}
 
   async create(createBookDto: CreateBookDto, user: IUser) {
     const newBook = await this.bookModel.create({
@@ -30,16 +29,17 @@ export class BooksService {
     delete filter.current;
     delete filter.pageSize;
 
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
 
-    const totalItems = (await this.bookModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const totalItems = await this.bookModel.countDocuments(filter);
 
     const result = await this.bookModel
       .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
+      .skip(skip)
+      .limit(pageSize)
       .sort(sort as any)
       .populate({
         path: 'category',
@@ -48,21 +48,18 @@ export class BooksService {
       .exec();
 
     return {
-      meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
-      },
-      result, //kết quả query
+      meta: getPaginationMeta({
+        current,
+        pageSize,
+        total: totalItems,
+      }),
+      result,
     };
   }
 
   async findOne(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(
-        `Book với id = ${id} không tồn tại trên hệ thống.`,
-      );
+      throw new BadRequestException(`Book với id = ${id} không tồn tại trên hệ thống.`);
     }
 
     return await this.bookModel.findById(id).populate('category');
@@ -83,9 +80,7 @@ export class BooksService {
 
   async remove(id: string, deletedBy?: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(
-        `Book với id = ${id} không tồn tại trên hệ thống.`,
-      );
+      throw new BadRequestException(`Book với id = ${id} không tồn tại trên hệ thống.`);
     }
 
     return await this.bookModel.delete({ _id: id }, deletedBy);

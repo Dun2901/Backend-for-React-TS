@@ -6,6 +6,7 @@ import aqp from 'api-query-params';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category, CategoryDocument } from './schemas/category.schema';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 
 @Injectable()
 export class CategoriesService {
@@ -132,16 +133,16 @@ export class CategoriesService {
     delete filter.current;
     delete filter.pageSize;
 
-    const current = Number(currentPage) || 1;
-    const pageSize = Number(limit) || 10;
-    const offset = (current - 1) * pageSize;
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
 
     const totalItems = await this.categoryModel.countDocuments(filter);
-    const totalPages = Math.ceil(totalItems / pageSize);
 
     let query = this.categoryModel
       .find(filter)
-      .skip(offset)
+      .skip(skip)
       .limit(pageSize)
       .sort(sort as Record<string, 1 | -1>);
 
@@ -152,12 +153,11 @@ export class CategoriesService {
     const result = await query.exec();
 
     return {
-      meta: {
+      meta: getPaginationMeta({
         current,
         pageSize,
-        pages: totalPages,
         total: totalItems,
-      },
+      }),
       result,
     };
   }
