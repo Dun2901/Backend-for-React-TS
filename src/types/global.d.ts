@@ -1,3 +1,5 @@
+import { UserRoles } from '@/common/enums';
+
 export {};
 
 declare global {
@@ -46,7 +48,7 @@ declare global {
     _id: string;
     fullName: string;
     email: string;
-    role: string;
+    role: UserRoles;
     phone: string;
     avatar: string;
   }

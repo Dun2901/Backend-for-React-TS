@@ -17,6 +17,7 @@ import { HistoryModule } from './modules/history/history.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { Connection } from 'mongoose';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     HistoryModule,
     PaymentsModule,
     DashboardModule,
+    ReviewsModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({

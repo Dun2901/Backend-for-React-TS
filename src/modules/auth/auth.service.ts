@@ -118,7 +118,7 @@ export class AuthService {
   };
 
   async generateTokens(user: TokenUser) {
-    const { _id, email, fullName, role, avatar } = user;
+    const { _id, email, fullName, role, avatar, tokenVersion } = user;
     const payload = {
       sub: 'token',
       iss: 'from server',
@@ -127,6 +127,7 @@ export class AuthService {
       email,
       role,
       avatar: avatar ? avatar : 'default-user.png',
+      tokenVersion: tokenVersion ?? 0,
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
