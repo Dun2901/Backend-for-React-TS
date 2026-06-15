@@ -21,6 +21,7 @@ type TokenUser = {
   fullName: string;
   role: string;
   avatar?: string;
+  tokenVersion?: number;
 };
 
 @Injectable()
@@ -211,6 +212,7 @@ export class AuthService {
 
       if (user) {
         await this.usersService.updateUserToken(null, user._id.toString());
+        await this.usersService.incrementTokenVersion(user._id.toString());
       }
     }
     response.clearCookie('refresh_token');

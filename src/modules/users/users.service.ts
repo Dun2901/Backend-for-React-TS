@@ -257,6 +257,14 @@ export class UsersService {
     );
   };
 
+  async findById(_id: string) {
+    return this.userModel.findById(_id).lean();
+  }
+
+  async incrementTokenVersion(_id: string) {
+    return this.userModel.updateOne({ _id }, { $inc: { tokenVersion: 1 } });
+  }
+
   async activateAccount(verifyCodeDto: VerifyCodeDto) {
     const { _id, codeId } = verifyCodeDto;
 
@@ -339,7 +347,7 @@ export class UsersService {
     const newHashedPassword = await this.getHashPassword(newPassword);
     await this.userModel.updateOne(
       { _id: user._id },
-      { password: newHashedPassword, passwordChangeAt: new Date() },
+      { password: newHashedPassword, passwordChangeAt: new Date(), $inc: { tokenVersion: 1 } },
     );
     return 'ok';
   }
