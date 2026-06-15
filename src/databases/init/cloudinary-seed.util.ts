@@ -5,6 +5,7 @@ import { v2 as cloudinary } from 'cloudinary';
 type UploadSeedImageOptions = {
   folder?: string;
   rootDir?: string;
+  seedBaseUrl?: string;
 };
 
 type BookSeedImages = {
@@ -40,6 +41,15 @@ const configCloudinary = () => {
   isCloudinaryConfigured = true;
 };
 
+const getCloudinaryFolder = (folder?: string) => {
+  return (
+    folder ||
+    process.env.CLOUDINARY_FOLDER ||
+    process.env.CLOUDINARY_BOOK_FOLDER ||
+    'bookstore/books'
+  );
+};
+
 const getImageRoot = (rootDir?: string) => {
   const imageRoot = rootDir || process.env.CLOUDINARY_SEED_IMAGE_ROOT || 'public/images/book';
 
@@ -60,19 +70,52 @@ const getPublicIdFromFileName = (fileName: string) => {
     .replace(/[^\w-]/g, '');
 };
 
+const getSeedBaseUrl = (seedBaseUrl?: string) => {
+  const value = seedBaseUrl || process.env.CLOUDINARY_SEED_BASE_URL || '';
+
+  return value.trim().replace(/\/+$/, '');
+};
+
+const encodeCloudinaryPath = (value: string) => {
+  return value
+    .replace(/^\/+/, '')
+    .split('/')
+    .map((item) => encodeURIComponent(item))
+    .join('/');
+};
+
+const buildSeedRemoteUrl = (fileName: string, seedBaseUrl?: string) => {
+  const baseUrl = getSeedBaseUrl(seedBaseUrl);
+
+  if (!baseUrl) return '';
+
+  return `${baseUrl}/${encodeCloudinaryPath(fileName)}`;
+};
+
 const uploadLocalImage = async (
   fileName: string,
   options: UploadSeedImageOptions = {},
 ): Promise<string> => {
   configCloudinary();
 
-  const folder = options.folder || process.env.CLOUDINARY_FOLDER || 'bookstore/books';
-
+  const folder = getCloudinaryFolder(options.folder);
   const imageRoot = getImageRoot(options.rootDir);
   const filePath = path.join(imageRoot, fileName);
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Không tìm thấy ảnh seed: ${filePath}`);
+    throw new Error(
+      [
+        `Không tìm thấy ảnh seed: ${filePath}`,
+        '',
+        'Cách fix:',
+        '1. Thêm ảnh local vào public/images/book',
+        'hoặc',
+        '2. Thêm CLOUDINARY_SEED_BASE_URL vào .env để seed bằng URL Cloudinary public.',
+        '',
+        'Ví dụ:',
+        'CLOUDINARY_SEED_BASE_URL=https://res.cloudinary.com/dzqvxuolo/image/upload/bookstore/books',
+      ].join('\n'),
+    );
   }
 
   const publicId = getPublicIdFromFileName(fileName);
@@ -98,8 +141,13 @@ export const uploadSeedImageToCloudinary = async (
     return fileName;
   }
 
-  const folder = options.folder || process.env.CLOUDINARY_FOLDER || 'bookstore/books';
+  const remoteUrl = buildSeedRemoteUrl(fileName, options.seedBaseUrl);
 
+  if (remoteUrl) {
+    return remoteUrl;
+  }
+
+  const folder = getCloudinaryFolder(options.folder);
   const imageRoot = getImageRoot(options.rootDir);
   const cacheKey = `${imageRoot}/${folder}/${fileName}`;
 
