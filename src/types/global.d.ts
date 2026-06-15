@@ -59,6 +59,7 @@ declare global {
     email: string;
     role: string;
     avatar: string;
+    tokenVersion: number;
   }
 
   interface IGoogleUser {
