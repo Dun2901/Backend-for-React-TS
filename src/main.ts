@@ -10,6 +10,7 @@ import { join } from 'path';
 import { GlobalExceptionFilter } from './common/exceptions/all-exception.filter';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { getClientUrl } from './common/utils/app-url.util';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -19,6 +20,9 @@ async function bootstrap() {
   const clientUrl = getClientUrl(configService);
 
   const reflector = app.get(Reflector);
+
+  // Config helmet
+  app.use(helmet());
 
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
   app.useGlobalPipes(

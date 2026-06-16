@@ -39,6 +39,7 @@
     "cookie-parser": "1.4.7",
     "dayjs": "1.11.20",
     "handlebars": "4.7.9",
+    "helmet": "^8.2.0",
     "mongoose": "9.3.0",
     "mongoose-delete": "1.0.7",
     "ms": "2.1.3",
