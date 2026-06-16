@@ -17,11 +17,13 @@ import { ResponseMessage } from '@/common/decorators/customize';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { FilesService } from './files.service';
 import type { CloudinaryMediaType } from './cloudinary.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('upload')
   @ResponseMessage('Upload single file')
   @UseInterceptors(FileInterceptor('file'))
@@ -37,6 +39,7 @@ export class FilesController {
     };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('upload-multiple')
   @ResponseMessage('Upload multiple files')
   @UseInterceptors(FilesInterceptor('files', 10))
@@ -52,6 +55,7 @@ export class FilesController {
     };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('upload-review')
   @ResponseMessage('Upload review media')
   @UseInterceptors(FilesInterceptor('files', 6))

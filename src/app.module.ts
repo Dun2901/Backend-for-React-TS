@@ -20,6 +20,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -38,6 +40,16 @@ import { AddressesModule } from './modules/addresses/addresses.module';
     ReviewsModule,
     LocationsModule,
     AddressesModule,
+
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 60,
+        },
+      ],
+      errorMessage: 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.',
+    }),
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
@@ -65,6 +77,10 @@ import { AddressesModule } from './modules/addresses/addresses.module';
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
     // },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

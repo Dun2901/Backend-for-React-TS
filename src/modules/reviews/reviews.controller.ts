@@ -4,11 +4,13 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { QueryReviewDto } from './dto/query-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewsService } from './reviews.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ResponseMessage('Tạo đánh giá thành công')
   create(@Body() createReviewDto: CreateReviewDto, @User() user: IUser) {
@@ -34,12 +36,14 @@ export class ReviewsController {
     return this.reviewsService.findMyPending(user);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch(':id')
   @ResponseMessage('Cập nhật đánh giá thành công')
   update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto, @User() user: IUser) {
     return this.reviewsService.update(id, updateReviewDto, user);
   }
 
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id/helpful')
   @ResponseMessage('Cập nhật trạng thái hữu ích thành công')
   markHelpful(@Param('id') id: string, @User() user: IUser) {
