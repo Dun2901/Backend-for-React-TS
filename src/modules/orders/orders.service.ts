@@ -22,6 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CheckoutDto } from './dto/checkout.dto';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { MailService } from '@/modules/mail/mail.service';
 
 @Injectable()
 export class OrdersService {
@@ -30,6 +31,7 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
+    private readonly mailService: MailService,
   ) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -148,6 +150,63 @@ export class OrdersService {
         },
         { session },
       );
+    }
+  }
+
+  private async findOrderForMail(orderId: mongoose.Types.ObjectId) {
+    return this.orderModel
+      .findById(orderId)
+      .populate({
+        path: 'userId',
+        select: 'fullName email',
+      })
+      .select('-deleted -items.deleted -shippingAddress.deleted')
+      .exec();
+  }
+
+  private getOrderUserEmail(order: OrderDocument) {
+    const user = order.userId as unknown as { email?: string };
+
+    return user?.email;
+  }
+
+  private async sendOrderStatusEmailSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.findOrderForMail(orderId);
+
+      if (!order) {
+        return;
+      }
+
+      const userEmail = this.getOrderUserEmail(order);
+
+      if (!userEmail) {
+        return;
+      }
+
+      await this.mailService.sendOrderStatusEmail(order, userEmail);
+    } catch (error) {
+      console.log('[Send order status email error]', error);
+    }
+  }
+
+  private async sendPaymentSuccessEmailSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.findOrderForMail(orderId);
+
+      if (!order) {
+        return;
+      }
+
+      const userEmail = this.getOrderUserEmail(order);
+
+      if (!userEmail) {
+        return;
+      }
+
+      await this.mailService.sendPaymentSuccessEmail(order, userEmail);
+    } catch (error) {
+      console.log('[Send payment success email error]', error);
     }
   }
 
@@ -440,7 +499,13 @@ export class OrdersService {
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
 
+      const updatedOrderId = updatedOrder?._id;
+
       await session.commitTransaction();
+
+      if (updatedOrderId) {
+        await this.sendOrderStatusEmailSafely(updatedOrderId);
+      }
 
       return updatedOrder;
     } catch (error) {
@@ -505,12 +570,30 @@ export class OrdersService {
   }
 
   async markPaid(orderId: string) {
-    return this.orderModel.findByIdAndUpdate(
-      orderId,
+    const updatedOrder = await this.orderModel.findOneAndUpdate(
       {
-        paymentStatus: PaymentStatus.PAID,
+        _id: orderId,
+        paymentStatus: {
+          $ne: PaymentStatus.PAID,
+        },
       },
-      { returnDocument: 'after' },
+      {
+        $set: {
+          paymentStatus: PaymentStatus.PAID,
+        },
+      },
+      {
+        returnDocument: 'after',
+        runValidators: true,
+      },
     );
+
+    if (!updatedOrder) {
+      return this.orderModel.findById(orderId);
+    }
+
+    await this.sendPaymentSuccessEmailSafely(updatedOrder._id);
+
+    return updatedOrder;
   }
 }
