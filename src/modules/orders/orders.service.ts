@@ -47,7 +47,7 @@ export class OrdersService {
   }
 
   private assertCanAccessOrder(order: OrderDocument, user: IUser) {
-    if (user.role === (UserRoles.ADMIN as string)) {
+    if (user.role === UserRoles.ADMIN) {
       return;
     }
 
@@ -298,21 +298,23 @@ export class OrdersService {
       limit,
     });
 
-    const totalItems = await this.bookModel.countDocuments(filter);
-
     const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
 
-    const result = await this.orderModel
-      .find(filter)
-      .skip(skip)
-      .limit(pageSize)
-      .sort(sortOption as any)
-      .populate({
-        path: 'userId',
-        select: 'fullName email',
-      })
-      .select('-deleted -items.deleted -shippingAddress.deleted')
-      .exec();
+    const [result, totalItems] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .skip(skip)
+        .limit(pageSize)
+        .sort(sortOption as any)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .exec(),
+
+      this.orderModel.countDocuments(filter),
+    ]);
 
     return {
       meta: getPaginationMeta({
@@ -376,7 +378,7 @@ export class OrdersService {
 
     this.assertCanAccessOrder(order, user);
 
-    if (user.role === (UserRoles.ADMIN as string)) {
+    if (user.role === UserRoles.ADMIN) {
       await order.populate({
         path: 'userId',
         select: 'fullName email',

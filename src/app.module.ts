@@ -18,6 +18,8 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { Connection } from 'mongoose';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { LocationsModule } from './modules/locations/locations.module';
+import { AddressesModule } from './modules/addresses/addresses.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     PaymentsModule,
     DashboardModule,
     ReviewsModule,
+    LocationsModule,
+    AddressesModule,
 
     ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
     MongooseModule.forRootAsync({
