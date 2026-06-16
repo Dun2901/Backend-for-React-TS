@@ -14,6 +14,7 @@ import { GoogleOauthGuard } from './guards/google-oauth.guard';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { buildClientRedirectUrl } from '@/common/utils/app-url.util';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -22,6 +23,7 @@ export class AuthController {
     private authService: AuthService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('/login')
@@ -30,6 +32,7 @@ export class AuthController {
     return this.authService.login(user, response);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/register')
   @ResponseMessage('Register a new user')
@@ -80,6 +83,7 @@ export class AuthController {
     return this.authService.logout(refreshToken, response);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/verify-code')
   @ResponseMessage('Verify code')
@@ -87,6 +91,7 @@ export class AuthController {
     return this.authService.verifyCode(verifyCodeDto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/resend-code')
   @ResponseMessage('Resend verify code')
@@ -94,12 +99,14 @@ export class AuthController {
     return this.authService.resendVerifyCode(email);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch('/change-password')
   @ResponseMessage('Change password')
   changePassword(@Body() changePasswordDto: ChangePasswordDto, @User() user: IUser) {
     return this.authService.changePassword(changePasswordDto, user);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/forgot-password')
   @ResponseMessage('Send reset password email')
@@ -107,6 +114,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/reset-password')
   @ResponseMessage('Reset password')

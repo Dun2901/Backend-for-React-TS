@@ -4,11 +4,13 @@ import { ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { CheckoutDto } from './dto/checkout.dto';
 import { UserRoles } from '@/common/enums';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) { }
+  constructor(private readonly ordersService: OrdersService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('checkout')
   @ResponseMessage('Đặt hàng thành công')
   checkout(@User() user: IUser, @Body() checkoutDto: CheckoutDto) {
@@ -55,6 +57,7 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, updateOrderStatusDto, user);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id/cancel')
   @ResponseMessage('Hủy đơn hàng thành công')
   cancel(@Param('id') id: string, @User() user: IUser) {
