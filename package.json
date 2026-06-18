@@ -30,6 +30,7 @@
     "@nestjs/mongoose": "11.0.4",
     "@nestjs/passport": "11.0.5",
     "@nestjs/platform-express": "11.1.14",
+    "@nestjs/swagger": "11.4.4",
     "@nestjs/throttler": "^6.5.0",
     "api-query-params": "6.1.0",
     "bcryptjs": "3.0.3",

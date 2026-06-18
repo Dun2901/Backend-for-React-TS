@@ -1,28 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import {
-  Public,
-  ResponseMessage,
-  Roles,
-  User,
-} from '@/common/decorators/customize';
+import { Public, ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { UserRoles } from '@/common/enums';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
+  @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Create a book')
@@ -48,17 +36,15 @@ export class BooksController {
     return this.booksService.findOne(id);
   }
 
+  @ApiBearerAuth('access-token')
   @Patch(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Update a book')
-  update(
-    @Param('id') id: string,
-    @Body() updateBookDto: UpdateBookDto,
-    @User() user: IUser,
-  ) {
+  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto, @User() user: IUser) {
     return this.booksService.update(id, updateBookDto, user);
   }
 
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Delete a book')

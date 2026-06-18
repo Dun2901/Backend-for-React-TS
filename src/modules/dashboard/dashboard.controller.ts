@@ -2,7 +2,9 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { ResponseMessage, Roles } from '@/common/decorators/customize';
 import { UserRoles } from '@/common/enums';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('dashboard')
 @Roles(UserRoles.ADMIN)
 export class DashboardController {

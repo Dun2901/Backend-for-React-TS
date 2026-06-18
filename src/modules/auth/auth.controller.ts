@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { Public, ResponseMessage, User } from '@/common/decorators/customize';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { RegisterUserDto, VerifyCodeDto } from '@/modules/users/dto/create-user.dto';
+import { RegisterUserDto, UserLoginDto, VerifyCodeDto } from '@/modules/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
 import {
   ChangePasswordDto,
@@ -15,6 +15,7 @@ import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { buildClientRedirectUrl } from '@/common/utils/app-url.util';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,7 @@ export class AuthController {
     private authService: AuthService,
   ) {}
 
+  @ApiBody({ type: UserLoginDto })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @UseGuards(LocalAuthGuard)
@@ -58,6 +60,7 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
+  @ApiBearerAuth('access-token')
   @Get('account')
   @Serialize(AccountResponseDto)
   @ResponseMessage('Get user account')
@@ -99,6 +102,7 @@ export class AuthController {
     return this.authService.resendVerifyCode(email);
   }
 
+  @ApiBearerAuth('access-token')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch('/change-password')
   @ResponseMessage('Change password')

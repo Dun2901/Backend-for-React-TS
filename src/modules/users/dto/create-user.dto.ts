@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty({ message: 'fullName không được để trống' })
@@ -39,4 +40,23 @@ export class VerifyCodeDto {
 
   @IsNotEmpty({ message: 'codeId không được để trống' })
   codeId: string;
+}
+
+export class UserLoginDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Email không đúng định dạng' })
+  @ApiProperty({
+    example: 'example@gmail.com',
+    description: 'Email',
+  })
+  readonly email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '123456',
+    description: 'Mật khẩu đăng nhập',
+  })
+  readonly password: string;
 }
