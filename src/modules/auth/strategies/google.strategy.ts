@@ -35,6 +35,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
       role: user.role,
       phone: user.phone,
       avatar: user.avatar ?? googleUser.avatar,
+      tokenVersion: user.tokenVersion ?? 0,
     };
   }
 }

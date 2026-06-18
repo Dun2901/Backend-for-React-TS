@@ -23,7 +23,13 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
 
   // Config helmet
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+    }),
+  );
 
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
   app.useGlobalPipes(

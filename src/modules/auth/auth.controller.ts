@@ -106,8 +106,12 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch('/change-password')
   @ResponseMessage('Change password')
-  changePassword(@Body() changePasswordDto: ChangePasswordDto, @User() user: IUser) {
-    return this.authService.changePassword(changePasswordDto, user);
+  changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @User() user: IUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.changePassword(changePasswordDto, user, response);
   }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } })

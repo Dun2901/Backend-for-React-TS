@@ -347,7 +347,12 @@ export class UsersService {
     const newHashedPassword = await this.getHashPassword(newPassword);
     await this.userModel.updateOne(
       { _id: user._id },
-      { password: newHashedPassword, passwordChangeAt: new Date(), $inc: { tokenVersion: 1 } },
+      {
+        password: newHashedPassword,
+        passwordChangeAt: new Date(),
+        $inc: { tokenVersion: 1 },
+        hashedRefreshToken: null,
+      },
     );
     return 'ok';
   }
@@ -416,6 +421,8 @@ export class UsersService {
         passwordResetToken: null,
         passwordResetExpired: null,
         passwordChangeAt: new Date(),
+        $inc: { tokenVersion: 1 },
+        hashedRefreshToken: null,
       },
     );
 

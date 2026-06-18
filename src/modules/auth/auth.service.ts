@@ -157,7 +157,25 @@ export class AuthService {
       });
 
       const user = await this.usersService.findByEmail(payload.email);
-      if (!user || !user.hashedRefreshToken) {
+
+      if (!user) {
+        throw new NotFoundException('Tài khoản không tồn tại. Vui lòng login lại.');
+      }
+
+      const currentTokenVersion = user.tokenVersion ?? 0;
+      const payloadTokenVersion = payload.tokenVersion ?? 0;
+
+      if (currentTokenVersion !== payloadTokenVersion) {
+        await this.usersService.updateUserToken(null, user._id.toString());
+        response.clearCookie('refresh_token');
+
+        throw new BadRequestException({
+          code: 'REFRESH_TOKEN_STALE',
+          message: 'Phiên đăng nhập đã hết hiệu lực. Vui lòng login lại.',
+        });
+      }
+
+      if (!user.hashedRefreshToken) {
         throw new NotFoundException('Không tồn tại refresh_token ở database. Vui lòng login lại.');
       }
 
@@ -228,8 +246,24 @@ export class AuthService {
     return await this.usersService.resendVerifyCode(email);
   }
 
-  async changePassword(changePasswordDto: ChangePasswordDto, user: IUser) {
-    return await this.usersService.changePassword(changePasswordDto, user);
+  async changePassword(changePasswordDto: ChangePasswordDto, user: IUser, response: Response) {
+    await this.usersService.changePassword(changePasswordDto, user);
+
+    // Fetch lại user để có tokenVersion mới nhất
+    const freshUser = await this.usersService.findByEmail(user.email);
+    if (!freshUser) throw new NotFoundException('User not found');
+
+    // Cấp token mới cho session hiện tại
+    const { accessToken, refreshToken } = await this.generateTokens(freshUser);
+    const refreshTokenHash = await hashToken(refreshToken);
+    await this.usersService.updateUserToken(refreshTokenHash, freshUser._id.toString());
+
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue),
+    });
+
+    return { access_token: accessToken };
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
