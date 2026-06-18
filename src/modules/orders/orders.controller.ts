@@ -5,7 +5,9 @@ import { CheckoutDto } from './dto/checkout.dto';
 import { UserRoles } from '@/common/enums';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}

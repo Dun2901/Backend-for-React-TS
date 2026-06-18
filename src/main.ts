@@ -11,6 +11,7 @@ import { GlobalExceptionFilter } from './common/exceptions/all-exception.filter'
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { getClientUrl } from './common/utils/app-url.util';
 import helmet from 'helmet';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,7 +23,13 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
 
   // Config helmet
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+    }),
+  );
 
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
   app.useGlobalPipes(
@@ -54,6 +61,30 @@ async function bootstrap() {
   });
 
   app.useStaticAssets(join(__dirname, '..', 'public')); // js, css, images
+
+  // Config Swagger
+  const config = new DocumentBuilder()
+    .setTitle('Book Store')
+    .setDescription('The Book Store API description')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'access-token',
+    )
+    // .addTag('cats')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('swagger', app, documentFactory, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(port);
 }

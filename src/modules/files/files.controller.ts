@@ -18,7 +18,9 @@ import { UpdateFileDto } from './dto/update-file.dto';
 import { FilesService } from './files.service';
 import type { CloudinaryMediaType } from './cloudinary.service';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}

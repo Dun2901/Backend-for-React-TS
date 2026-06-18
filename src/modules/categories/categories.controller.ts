@@ -1,28 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import {
-  Public,
-  ResponseMessage,
-  Roles,
-  User,
-} from '@/common/decorators/customize';
+import { Public, ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { UserRoles } from '@/common/enums';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Create category')
@@ -46,6 +34,7 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @ApiBearerAuth('access-token')
   @Get('deleted')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Fetch deleted categories')
@@ -60,6 +49,7 @@ export class CategoriesController {
     return this.categoriesService.findOne(id);
   }
 
+  @ApiBearerAuth('access-token')
   @Patch(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Update a category')
@@ -71,6 +61,7 @@ export class CategoriesController {
     return this.categoriesService.update(id, updateCategoryDto, user);
   }
 
+  @ApiBearerAuth('access-token')
   @Patch(':id/restore')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Restore category')
@@ -78,6 +69,7 @@ export class CategoriesController {
     return this.categoriesService.restore(id, user);
   }
 
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Delete category')

@@ -4,7 +4,9 @@ import { ResponseMessage, User } from '@/common/decorators/customize';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}

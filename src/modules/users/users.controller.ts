@@ -7,7 +7,9 @@ import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { UserRoles } from '@/common/enums';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserAdminResponseDto } from './dto/user-admin-response.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
