@@ -22,6 +22,7 @@ import { LocationsModule } from './modules/locations/locations.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { APP_GUARD } from '@nestjs/core';
     ReviewsModule,
     LocationsModule,
     AddressesModule,
+    NotificationsModule,
 
     ThrottlerModule.forRoot({
       throttlers: [
