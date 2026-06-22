@@ -23,6 +23,15 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CheckoutDto } from './dto/checkout.dto';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 import { MailService } from '@/modules/mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING]: 'Chờ xác nhận',
+  [OrderStatus.CONFIRMED]: 'Đã xác nhận',
+  [OrderStatus.SHIPPING]: 'Đang giao',
+  [OrderStatus.COMPLETED]: 'Hoàn thành',
+  [OrderStatus.CANCELLED]: 'Đã hủy',
+};
 
 @Injectable()
 export class OrdersService {
@@ -32,6 +41,7 @@ export class OrdersService {
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -207,6 +217,49 @@ export class OrdersService {
       await this.mailService.sendPaymentSuccessEmail(order, userEmail);
     } catch (error) {
       console.log('[Send payment success email error]', error);
+    }
+  }
+
+  private async createOrderStatusNotificationSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .select('userId orderCode status')
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      await this.notificationsService.createOrderStatusNotification({
+        userId: order.userId,
+        orderId: order._id,
+        orderCode: order.orderCode,
+        statusLabel: ORDER_STATUS_LABEL[order.status] || order.status,
+      });
+    } catch (error) {
+      console.log('[Create order status notification error]', error);
+    }
+  }
+
+  private async createPaymentSuccessNotificationSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .select('userId orderCode paymentStatus')
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      await this.notificationsService.createPaymentSuccessNotification({
+        userId: order.userId,
+        orderId: order._id,
+        orderCode: order.orderCode,
+      });
+    } catch (error) {
+      console.log('[Create payment success notification error]', error);
     }
   }
 
@@ -505,6 +558,7 @@ export class OrdersService {
 
       if (updatedOrderId) {
         await this.sendOrderStatusEmailSafely(updatedOrderId);
+        await this.createOrderStatusNotificationSafely(updatedOrderId);
       }
 
       return updatedOrder;
@@ -593,6 +647,7 @@ export class OrdersService {
     }
 
     await this.sendPaymentSuccessEmailSafely(updatedOrder._id);
+    await this.createPaymentSuccessNotificationSafely(updatedOrder._id);
 
     return updatedOrder;
   }
