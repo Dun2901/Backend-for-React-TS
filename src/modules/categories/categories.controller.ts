@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Public, ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { UserRoles } from '@/common/enums';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('categories')
 export class CategoriesController {
@@ -19,6 +30,7 @@ export class CategoriesController {
   }
 
   @Public()
+  @UseInterceptors(CacheInterceptor)
   @Get()
   @ResponseMessage('Fetch categories')
   findAllForAdmin(
@@ -43,6 +55,7 @@ export class CategoriesController {
   }
 
   @Public()
+  @UseInterceptors(CacheInterceptor)
   @Get(':id')
   @ResponseMessage('Fetch category by id')
   findOne(@Param('id') id: string) {

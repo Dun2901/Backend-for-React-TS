@@ -23,9 +23,13 @@ import { AddressesModule } from './modules/addresses/addresses.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
+
     UsersModule,
     AuthModule,
     MailModule,
@@ -53,7 +57,25 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       errorMessage: 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.',
     }),
 
-    ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        // const host = configService.get<string>('REDIS_HOST') || 'localhost';
+        // const port = configService.get<number>('REDIS_PORT') || 6379;
+        const ttl = configService.get<number>('REDIS_CACHE_TTL') || 300000;
+
+        // const redisUrl = `redis://${host}:${port}`; => cái này dùng để chạy local
+        const redisUrl = configService.get<string>('REDIS_URL');
+
+        return {
+          stores: [new KeyvRedis(redisUrl)],
+          ttl,
+        };
+      },
+      inject: [ConfigService],
+    }),
+
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

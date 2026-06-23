@@ -20,6 +20,10 @@ type AdminNewOrderSocketPayload = {
   order: unknown;
 };
 
+type AdminOrderUpdatedSocketPayload = {
+  order: unknown;
+};
+
 type NotificationSocket = Socket<
   Record<string, never>,
   Record<string, never>,
@@ -95,6 +99,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   emitNewOrderToAdmins(payload: AdminNewOrderSocketPayload) {
     this.server.to(this.getAdminOrdersRoom()).emit('admin:order:new', payload);
+  }
+
+  emitOrderUpdatedToAdmins(payload: AdminOrderUpdatedSocketPayload) {
+    this.server.to(this.getAdminOrdersRoom()).emit('admin:order:updated', payload);
   }
 
   private getUserRoom(userId: string | mongoose.Types.ObjectId) {

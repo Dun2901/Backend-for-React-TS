@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
@@ -7,13 +7,22 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectModel(Category.name)
     private readonly categoryModel: SoftDeleteModel<CategoryDocument>,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
+
+  private async clearCache() {
+    await this.cacheManager.clear();
+  }
 
   /**
    * Kiểm tra ID có đúng định dạng MongoDB ObjectId hay không.
@@ -105,6 +114,8 @@ export class CategoriesService {
         email: user.email,
       },
     });
+
+    await this.clearCache();
 
     return {
       _id: newCategory._id,
@@ -231,6 +242,8 @@ export class CategoriesService {
       },
     );
 
+    await this.clearCache();
+
     return {
       message: 'Cập nhật danh mục thành công',
     };
@@ -289,6 +302,8 @@ export class CategoriesService {
       },
     });
 
+    await this.clearCache();
+
     return {
       message: 'Khôi phục danh mục thành công',
     };
@@ -314,6 +329,8 @@ export class CategoriesService {
       },
       deletedBy,
     );
+
+    await this.clearCache();
 
     return {
       message: 'Xóa danh mục thành công',

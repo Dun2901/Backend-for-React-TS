@@ -93,6 +93,10 @@ export class NotificationsService {
     this.notificationsGateway.emitNewOrderToAdmins(payload);
   }
 
+  emitOrderUpdatedToAdmins(payload: { order: unknown }) {
+    this.notificationsGateway.emitOrderUpdatedToAdmins(payload);
+  }
+
   async findMyNotifications(user: IUser, currentPage: number, limit: number, isRead?: string) {
     const current = Number(currentPage) || 1;
     const pageSize = Number(limit) || 10;

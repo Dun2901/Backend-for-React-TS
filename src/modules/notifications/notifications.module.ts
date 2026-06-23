@@ -4,12 +4,9 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsGateway } from './notifications.gateway';
 import { NotificationsService } from './notifications.service';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    JwtModule,
-
     MongooseModule.forFeature([
       {
         name: Notification.name,

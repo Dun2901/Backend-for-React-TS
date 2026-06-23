@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,6 +16,8 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { QueryReviewDto } from './dto/query-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Review, ReviewDocument } from './schemas/review.schema';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 type RatingSummary = {
   1: number;
@@ -86,6 +89,9 @@ export class ReviewsService {
 
     @InjectModel(Order.name)
     private readonly orderModel: SoftDeleteModel<OrderDocument>,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   private validateObjectId(id: string, message = 'ID không hợp lệ') {
@@ -275,6 +281,8 @@ export class ReviewsService {
         },
       )
       .exec();
+
+    await this.cacheManager.clear();
 
     return {
       averageRating,

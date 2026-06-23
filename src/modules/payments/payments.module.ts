@@ -4,14 +4,13 @@ import { PaymentsService } from './payments.service';
 import { OrdersModule } from '../orders/orders.module';
 import { VnpayModule } from 'nestjs-vnpay';
 import { HashAlgorithm, ignoreLogger } from 'vnpay';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     OrdersModule,
 
     VnpayModule.registerAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         tmnCode: configService.getOrThrow<string>('VNPAY_TMN_CODE'),

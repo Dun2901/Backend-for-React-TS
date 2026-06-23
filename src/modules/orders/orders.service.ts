@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,6 +25,8 @@ import { CheckoutDto } from './dto/checkout.dto';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
 import { MailService } from '@/modules/mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'Chờ xác nhận',
@@ -42,9 +45,14 @@ export class OrdersService {
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+  private async clearBookCache() {
+    await this.cacheManager.clear();
+  }
+
   private validateObjectId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Mã đơn hàng không hợp lệ');
@@ -299,6 +307,43 @@ export class OrdersService {
     }
   }
 
+  private async emitOrderUpdatedToAdminsSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .lean()
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      const user = order.userId as { fullName?: string; email?: string } | undefined;
+
+      this.notificationsService.emitOrderUpdatedToAdmins({
+        order: {
+          _id: order._id.toString(),
+          orderCode: order.orderCode,
+          customerName: user?.fullName || order.shippingAddress?.fullName || 'Khách hàng',
+          customerEmail: user?.email,
+          totalPrice: order.totalPrice,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+        },
+      });
+    } catch (error) {
+      console.log('[Emit order updated to admins error]', error);
+    }
+  }
+
   // ─── Queries ─────────────────────────────────────────────────────────────
   async checkout(user: IUser, checkoutDto: CheckoutDto) {
     const session = await this.connection.startSession();
@@ -425,6 +470,8 @@ export class OrdersService {
         .session(session);
 
       await session.commitTransaction();
+
+      await this.clearBookCache();
 
       await this.emitNewOrderToAdminsSafely(order._id);
 
@@ -594,7 +641,12 @@ export class OrdersService {
 
       await session.commitTransaction();
 
+      if (newStatus === OrderStatus.CANCELLED) {
+        await this.clearBookCache();
+      }
+
       if (updatedOrderId) {
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrderId);
         await this.sendOrderStatusEmailSafely(updatedOrderId);
         await this.createOrderStatusNotificationSafely(updatedOrderId);
       }
@@ -642,7 +694,15 @@ export class OrdersService {
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
 
+      const updatedOrderId = updatedOrder?._id;
+
       await session.commitTransaction();
+
+      await this.clearBookCache();
+
+      if (updatedOrderId) {
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrderId);
+      }
 
       return updatedOrder;
     } catch (error) {
