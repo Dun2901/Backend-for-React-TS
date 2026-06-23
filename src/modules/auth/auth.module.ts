@@ -15,8 +15,8 @@ import { GoogleStrategy } from './strategies/google.strategy';
     PassportModule,
 
     JwtModule.registerAsync({
+      global: true, // Để toàn bộ các module đều dùng được luôn
       useFactory: (configService: ConfigService) => ({
-        global: true,
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('JWT_ACCESS_EXPIRE'),
