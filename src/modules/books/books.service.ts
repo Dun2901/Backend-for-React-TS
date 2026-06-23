@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,16 +7,30 @@ import type { SoftDeleteModel } from 'mongoose-delete';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class BooksService {
-  constructor(@InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>) {}
+  constructor(
+    @InjectModel(Book.name)
+    private bookModel: SoftDeleteModel<BookDocument>,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
+  ) {}
+
+  private async clearCache() {
+    await this.cacheManager.clear();
+  }
 
   async create(createBookDto: CreateBookDto, user: IUser) {
     const newBook = await this.bookModel.create({
       ...createBookDto,
       createdBy: { _id: user._id, email: user.email },
     });
+
+    await this.clearCache();
 
     return {
       _id: newBook._id,
@@ -25,6 +39,7 @@ export class BooksService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
+    console.log('[DB QUERY] BooksService.findAll chạy vào MongoDB');
     const { filter, sort } = aqp(qs);
 
     delete filter.current;
@@ -74,7 +89,7 @@ export class BooksService {
   }
 
   async update(id: string, updateBookDto: UpdateBookDto, user: IUser) {
-    return await this.bookModel.updateOne(
+    const result = await this.bookModel.updateOne(
       { _id: id },
       {
         ...updateBookDto,
@@ -84,6 +99,10 @@ export class BooksService {
         },
       },
     );
+
+    await this.clearCache();
+
+    return result;
   }
 
   async remove(id: string, deletedBy?: string) {
@@ -91,6 +110,10 @@ export class BooksService {
       throw new BadRequestException(`Book với id = ${id} không tồn tại trên hệ thống.`);
     }
 
-    return await this.bookModel.delete({ _id: id }, deletedBy);
+    const result = await this.bookModel.delete({ _id: id }, deletedBy);
+
+    await this.clearCache();
+
+    return result;
   }
 }

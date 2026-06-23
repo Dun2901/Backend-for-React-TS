@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { Public, ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { UserRoles } from '@/common/enums';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('books')
 export class BooksController {
@@ -19,6 +30,7 @@ export class BooksController {
   }
 
   @Public()
+  @UseInterceptors(CacheInterceptor)
   @Get()
   @ResponseMessage('Fetch book with paginate')
   findAll(
@@ -30,6 +42,7 @@ export class BooksController {
   }
 
   @Public()
+  @UseInterceptors(CacheInterceptor)
   @Get(':id')
   @ResponseMessage('Fetch book by id')
   findOne(@Param('id') id: string) {
