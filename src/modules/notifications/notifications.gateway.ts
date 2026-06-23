@@ -7,12 +7,17 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { UserRoles } from '@/common/enums';
 import mongoose from 'mongoose';
 import { Server, Socket } from 'socket.io';
 
 type NotificationSocketPayload = {
   notification: unknown;
   unreadCount: number;
+};
+
+type AdminNewOrderSocketPayload = {
+  order: unknown;
 };
 
 type NotificationSocket = Socket<
@@ -56,6 +61,11 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       client.data.userId = payload._id;
       await client.join(this.getUserRoom(payload._id));
 
+      // Admin sẽ được join thêm room riêng để nhận đơn hàng mới
+      if (payload.role === UserRoles.ADMIN) {
+        await client.join(this.getAdminOrdersRoom());
+      }
+
       this.logger.log(`Notification socket connected: user=${payload._id}`);
     } catch {
       client.disconnect();
@@ -83,8 +93,16 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     });
   }
 
+  emitNewOrderToAdmins(payload: AdminNewOrderSocketPayload) {
+    this.server.to(this.getAdminOrdersRoom()).emit('admin:order:new', payload);
+  }
+
   private getUserRoom(userId: string | mongoose.Types.ObjectId) {
     return `user:${userId.toString()}`;
+  }
+
+  private getAdminOrdersRoom() {
+    return 'admin:orders';
   }
 
   private extractToken(client: NotificationSocket) {
