@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
+import { NotificationsGateway } from './notifications.gateway';
 import {
   Notification,
   NotificationDocument,
@@ -18,6 +19,7 @@ export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
     private notificationModel: SoftDeleteModel<NotificationDocument>,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   private validateObjectId(id: string) {
@@ -26,13 +28,35 @@ export class NotificationsService {
     }
   }
 
+  private async countUnreadByUserId(userId: mongoose.Types.ObjectId | string) {
+    return this.notificationModel.countDocuments({
+      userId,
+      isRead: false,
+    });
+  }
+
+  private async emitNewNotification(notification: NotificationDocument) {
+    const unreadCount = await this.countUnreadByUserId(notification.userId);
+
+    this.notificationsGateway.emitNewNotification(notification.userId, {
+      notification: notification.toObject(),
+      unreadCount,
+    });
+  }
+
+  private async emitUnreadCount(userId: mongoose.Types.ObjectId | string) {
+    const unreadCount = await this.countUnreadByUserId(userId);
+
+    this.notificationsGateway.emitUnreadCount(userId, unreadCount);
+  }
+
   async createOrderStatusNotification(data: {
     userId: mongoose.Types.ObjectId | string;
     orderId: mongoose.Types.ObjectId | string;
     orderCode: string;
     statusLabel: string;
   }) {
-    return this.notificationModel.create({
+    const notification = await this.notificationModel.create({
       userId: data.userId,
       orderId: data.orderId,
       orderCode: data.orderCode,
@@ -40,6 +64,10 @@ export class NotificationsService {
       title: `Đơn hàng ${data.statusLabel}`,
       message: `Đơn hàng ${data.orderCode} ${data.statusLabel.toLowerCase()}.`,
     });
+
+    await this.emitNewNotification(notification);
+
+    return notification;
   }
 
   async createPaymentSuccessNotification(data: {
@@ -47,7 +75,7 @@ export class NotificationsService {
     orderId: mongoose.Types.ObjectId | string;
     orderCode: string;
   }) {
-    return this.notificationModel.create({
+    const notification = await this.notificationModel.create({
       userId: data.userId,
       orderId: data.orderId,
       orderCode: data.orderCode,
@@ -55,6 +83,10 @@ export class NotificationsService {
       title: 'Thanh toán thành công',
       message: `Bạn đã thanh toán thành công đơn hàng ${data.orderCode}.`,
     });
+
+    await this.emitNewNotification(notification);
+
+    return notification;
   }
 
   async findMyNotifications(user: IUser, currentPage: number, limit: number, isRead?: string) {
@@ -120,7 +152,11 @@ export class NotificationsService {
     notification.isRead = true;
     notification.readAt = new Date();
 
-    return notification.save();
+    const savedNotification = await notification.save();
+
+    await this.emitUnreadCount(user._id);
+
+    return savedNotification;
   }
 
   async markAllRead(user: IUser) {
@@ -136,6 +172,8 @@ export class NotificationsService {
         },
       },
     );
+
+    await this.emitUnreadCount(user._id);
 
     return { success: true };
   }
