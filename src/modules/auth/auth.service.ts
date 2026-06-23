@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import ms from 'ms';
-import { authTypeEnum } from '@/common/enums';
+import { authTypeEnum, UserRoles } from '@/common/enums';
 import { User, UserDocument } from '@/modules/users/schemas/user.schema';
 import { compareToken, hashToken } from '@/common/helpers/token.helper';
 import { Types } from 'mongoose';
@@ -19,7 +19,7 @@ type TokenUser = {
   _id: string | Types.ObjectId;
   email: string;
   fullName: string;
-  role: string;
+  role: UserRoles;
   avatar?: string;
   tokenVersion?: number;
 };

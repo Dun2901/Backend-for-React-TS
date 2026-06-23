@@ -59,7 +59,7 @@ declare global {
     _id: string;
     fullName: string;
     email: string;
-    role: string;
+    role: UserRoles;
     avatar: string;
     tokenVersion: number;
   }

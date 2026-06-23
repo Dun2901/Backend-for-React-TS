@@ -263,6 +263,42 @@ export class OrdersService {
     }
   }
 
+  private async emitNewOrderToAdminsSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .lean()
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      const user = order.userId as { fullName?: string; email?: string } | undefined;
+
+      this.notificationsService.emitNewOrderToAdmins({
+        order: {
+          _id: order._id.toString(),
+          orderCode: order.orderCode,
+          customerName: user?.fullName || order.shippingAddress?.fullName || 'Khách hàng',
+          customerEmail: user?.email,
+          totalPrice: order.totalPrice,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          createdAt: order.createdAt,
+        },
+      });
+    } catch (error) {
+      console.log('[Emit new order to admins error]', error);
+    }
+  }
+
   // ─── Queries ─────────────────────────────────────────────────────────────
   async checkout(user: IUser, checkoutDto: CheckoutDto) {
     const session = await this.connection.startSession();
@@ -389,6 +425,8 @@ export class OrdersService {
         .session(session);
 
       await session.commitTransaction();
+
+      await this.emitNewOrderToAdminsSafely(order._id);
 
       return cleanOrder;
     } catch (error) {

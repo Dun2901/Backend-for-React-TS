@@ -106,6 +106,12 @@ export class Order {
 
   @Prop({ type: Object })
   updatedBy: { _id: mongoose.Types.ObjectId; email: string };
+
+  @Prop()
+  createdAt: Date;
+
+  @Prop()
+  updatedAt: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
