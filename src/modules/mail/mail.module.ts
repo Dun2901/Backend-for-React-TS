@@ -5,9 +5,17 @@ import { join } from 'path';
 import { MailController } from './mail.controller';
 import { MailService } from './mail.service';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { BullModule } from '@nestjs/bullmq';
+import { MAIL_QUEUE } from '@/common/constants/queue.constant';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Order, OrderSchema } from '../orders/schemas/order.schema';
+import { MailProcessor } from './mail.processor';
 
 @Module({
   imports: [
+    BullModule.registerQueue({ name: MAIL_QUEUE }),
+    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+
     MailerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService<IConfigService>) => {
@@ -43,7 +51,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
     }),
   ],
   controllers: [MailController],
-  providers: [MailService],
+  providers: [MailService, MailProcessor],
   exports: [MailService],
 })
-export class MailModule { }
+export class MailModule {}

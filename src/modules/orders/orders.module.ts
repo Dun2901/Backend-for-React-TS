@@ -5,13 +5,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from './schemas/order.schema';
 import { Cart, CartSchema } from '@/modules/carts/schemas/cart.schema';
 import { Book, BookSchema } from '@/modules/books/schemas/book.schema';
-import { MailModule } from '@/modules/mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { BullModule } from '@nestjs/bullmq';
+import { MAIL_QUEUE, NOTIFICATION_QUEUE } from '@/common/constants/queue.constant';
 
 @Module({
   imports: [
-    MailModule,
     NotificationsModule,
+
+    BullModule.registerQueue({ name: MAIL_QUEUE }, { name: NOTIFICATION_QUEUE }),
 
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },

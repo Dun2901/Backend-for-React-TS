@@ -25,6 +25,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
+import { BullModule } from '@nestjs/bullmq';
+import { parseRedisConnection } from './common/utils/redis-connection.util';
 
 @Module({
   imports: [
@@ -71,6 +73,28 @@ import KeyvRedis from '@keyv/redis';
         return {
           stores: [new KeyvRedis(redisUrl)],
           ttl,
+        };
+      },
+      inject: [ConfigService],
+    }),
+
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const redisQueueUrl =
+          configService.get<string>('REDIS_QUEUE_URL') || 'redis://127.0.0.1:6379';
+
+        return {
+          connection: parseRedisConnection(redisQueueUrl),
+          defaultJobOptions: {
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 3000,
+            },
+            removeOnComplete: true,
+            removeOnFail: false,
+          },
         };
       },
       inject: [ConfigService],
