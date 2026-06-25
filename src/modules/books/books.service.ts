@@ -39,7 +39,7 @@ export class BooksService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    console.log('[DB QUERY] BooksService.findAll chạy vào MongoDB');
+    // console.log('[DB QUERY] BooksService.findAll chạy vào MongoDB');
     const { filter, sort } = aqp(qs);
 
     delete filter.current;

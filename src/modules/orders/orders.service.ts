@@ -23,10 +23,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CheckoutDto } from './dto/checkout.dto';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
-import { MailService } from '@/modules/mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import {
+  MAIL_JOB,
+  MAIL_QUEUE,
+  NOTIFICATION_JOB,
+  NOTIFICATION_QUEUE,
+} from '@/common/constants/queue.constant';
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'Chờ xác nhận',
@@ -43,12 +50,14 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
-    private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
+    @InjectQueue(NOTIFICATION_QUEUE) private readonly notificationQueue: Queue,
   ) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
   private async clearBookCache() {
     await this.cacheManager.clear();
   }
@@ -76,14 +85,14 @@ export class OrdersService {
     }
   }
 
-  private getCartItemBookId(item: any) {
+  private getCartItemBookId(item: { bookId: mongoose.Types.ObjectId }) {
     const bookValue = item.bookId;
 
     if (bookValue?._id) {
-      return bookValue._id as mongoose.Types.ObjectId;
+      return bookValue._id;
     }
 
-    return bookValue as mongoose.Types.ObjectId;
+    return bookValue;
   }
 
   private calculateCartTotals(
@@ -107,14 +116,6 @@ export class OrdersService {
   }
 
   private validateOrderStatusTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
-    /*
-     * PENDING   → CONFIRMED | CANCELLED
-     * CONFIRMED → SHIPPING  | CANCELLED
-     * SHIPPING  → COMPLETED
-     * COMPLETED → (không đổi)
-     * CANCELLED → (không đổi)
-     */
-
     if (currentStatus === nextStatus) {
       throw new BadRequestException('Trạng thái mới phải khác trạng thái hiện tại');
     }
@@ -171,105 +172,7 @@ export class OrdersService {
     }
   }
 
-  private async findOrderForMail(orderId: mongoose.Types.ObjectId) {
-    return this.orderModel
-      .findById(orderId)
-      .populate({
-        path: 'userId',
-        select: 'fullName email',
-      })
-      .select('-deleted -items.deleted -shippingAddress.deleted')
-      .exec();
-  }
-
-  private getOrderUserEmail(order: OrderDocument) {
-    const user = order.userId as unknown as { email?: string };
-
-    return user?.email;
-  }
-
-  private async sendOrderStatusEmailSafely(orderId: mongoose.Types.ObjectId) {
-    try {
-      const order = await this.findOrderForMail(orderId);
-
-      if (!order) {
-        return;
-      }
-
-      const userEmail = this.getOrderUserEmail(order);
-
-      if (!userEmail) {
-        return;
-      }
-
-      await this.mailService.sendOrderStatusEmail(order, userEmail);
-    } catch (error) {
-      console.log('[Send order status email error]', error);
-    }
-  }
-
-  private async sendPaymentSuccessEmailSafely(orderId: mongoose.Types.ObjectId) {
-    try {
-      const order = await this.findOrderForMail(orderId);
-
-      if (!order) {
-        return;
-      }
-
-      const userEmail = this.getOrderUserEmail(order);
-
-      if (!userEmail) {
-        return;
-      }
-
-      await this.mailService.sendPaymentSuccessEmail(order, userEmail);
-    } catch (error) {
-      console.log('[Send payment success email error]', error);
-    }
-  }
-
-  private async createOrderStatusNotificationSafely(orderId: mongoose.Types.ObjectId) {
-    try {
-      const order = await this.orderModel
-        .findById(orderId)
-        .select('userId orderCode status')
-        .exec();
-
-      if (!order) {
-        return;
-      }
-
-      await this.notificationsService.createOrderStatusNotification({
-        userId: order.userId,
-        orderId: order._id,
-        orderCode: order.orderCode,
-        statusLabel: ORDER_STATUS_LABEL[order.status] || order.status,
-      });
-    } catch (error) {
-      console.log('[Create order status notification error]', error);
-    }
-  }
-
-  private async createPaymentSuccessNotificationSafely(orderId: mongoose.Types.ObjectId) {
-    try {
-      const order = await this.orderModel
-        .findById(orderId)
-        .select('userId orderCode paymentStatus')
-        .exec();
-
-      if (!order) {
-        return;
-      }
-
-      await this.notificationsService.createPaymentSuccessNotification({
-        userId: order.userId,
-        orderId: order._id,
-        orderCode: order.orderCode,
-      });
-    } catch (error) {
-      console.log('[Create payment success notification error]', error);
-    }
-  }
+  // ─── Socket emit helpers (vẫn gọi trực tiếp vì cần real-time) ────────────
 
   private async emitNewOrderToAdminsSafely(orderId: mongoose.Types.ObjectId) {
     try {
@@ -345,6 +248,7 @@ export class OrdersService {
   }
 
   // ─── Queries ─────────────────────────────────────────────────────────────
+
   async checkout(user: IUser, checkoutDto: CheckoutDto) {
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -472,7 +376,6 @@ export class OrdersService {
       await session.commitTransaction();
 
       await this.clearBookCache();
-
       await this.emitNewOrderToAdminsSafely(order._id);
 
       return cleanOrder;
@@ -614,7 +517,6 @@ export class OrdersService {
         },
       };
 
-      // Khi giao thành công đơn COD, xem như khách đã thanh toán
       if (
         newStatus === OrderStatus.COMPLETED &&
         order.paymentMethod === PaymentMethod.COD &&
@@ -626,9 +528,7 @@ export class OrdersService {
       const updatedOrder = await this.orderModel
         .findOneAndUpdate(
           { _id: id },
-          {
-            $set: updateData,
-          },
+          { $set: updateData },
           {
             returnDocument: 'after',
             session,
@@ -637,18 +537,29 @@ export class OrdersService {
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
 
-      const updatedOrderId = updatedOrder?._id;
-
       await session.commitTransaction();
 
       if (newStatus === OrderStatus.CANCELLED) {
         await this.clearBookCache();
       }
 
-      if (updatedOrderId) {
-        await this.emitOrderUpdatedToAdminsSafely(updatedOrderId);
-        await this.sendOrderStatusEmailSafely(updatedOrderId);
-        await this.createOrderStatusNotificationSafely(updatedOrderId);
+      if (updatedOrder) {
+        const orderId = updatedOrder._id.toString();
+        const statusLabel = ORDER_STATUS_LABEL[newStatus] || newStatus;
+
+        // Socket emit → giữ trực tiếp (real-time admin dashboard)
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrder._id);
+
+        // Mail + Notification → đưa vào queue, xử lý background
+        await Promise.all([
+          this.mailQueue.add(MAIL_JOB.SEND_ORDER_STATUS, { orderId }),
+          this.notificationQueue.add(NOTIFICATION_JOB.CREATE_ORDER_STATUS, {
+            userId: updatedOrder.userId.toString(),
+            orderId,
+            orderCode: updatedOrder.orderCode,
+            statusLabel,
+          }),
+        ]);
       }
 
       return updatedOrder;
@@ -684,9 +595,7 @@ export class OrdersService {
       const updatedOrder = await this.orderModel
         .findOneAndUpdate(
           { _id: id },
-          {
-            status: OrderStatus.CANCELLED,
-          },
+          { status: OrderStatus.CANCELLED },
           {
             returnDocument: 'after',
             session,
@@ -694,14 +603,12 @@ export class OrdersService {
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
 
-      const updatedOrderId = updatedOrder?._id;
-
       await session.commitTransaction();
 
       await this.clearBookCache();
 
-      if (updatedOrderId) {
-        await this.emitOrderUpdatedToAdminsSafely(updatedOrderId);
+      if (updatedOrder) {
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrder._id);
       }
 
       return updatedOrder;
@@ -725,14 +632,10 @@ export class OrdersService {
     const updatedOrder = await this.orderModel.findOneAndUpdate(
       {
         _id: orderId,
-        paymentStatus: {
-          $ne: PaymentStatus.PAID,
-        },
+        paymentStatus: { $ne: PaymentStatus.PAID },
       },
       {
-        $set: {
-          paymentStatus: PaymentStatus.PAID,
-        },
+        $set: { paymentStatus: PaymentStatus.PAID },
       },
       {
         returnDocument: 'after',
@@ -744,8 +647,17 @@ export class OrdersService {
       return this.orderModel.findById(orderId);
     }
 
-    await this.sendPaymentSuccessEmailSafely(updatedOrder._id);
-    await this.createPaymentSuccessNotificationSafely(updatedOrder._id);
+    const oid = updatedOrder._id.toString();
+
+    // Mail + Notification → queue
+    await Promise.all([
+      this.mailQueue.add(MAIL_JOB.SEND_PAYMENT_SUCCESS, { orderId: oid }),
+      this.notificationQueue.add(NOTIFICATION_JOB.CREATE_PAYMENT_SUCCESS, {
+        userId: updatedOrder.userId.toString(),
+        orderId: oid,
+        orderCode: updatedOrder.orderCode,
+      }),
+    ]);
 
     return updatedOrder;
   }
