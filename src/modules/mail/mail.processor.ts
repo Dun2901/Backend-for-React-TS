@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectModel } from '@nestjs/mongoose';
 import { Job } from 'bullmq';
 import type { SoftDeleteModel } from 'mongoose-delete';
@@ -133,5 +133,20 @@ export class MailProcessor extends WorkerHost {
 
     await this.mailService.sendPaymentSuccessEmail(order, userEmail);
     this.logger.log(`[${MAIL_JOB.SEND_PAYMENT_SUCCESS}] Sent: orderId=${orderId}`);
+  }
+
+  @OnWorkerEvent('completed')
+  onCompleted(job: Job) {
+    this.logger.log(
+      `[Worker completed] jobId=${job.id} name=${job.name} attempts=${job.attemptsMade}`,
+    );
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job | undefined, error: Error) {
+    this.logger.error(
+      `[Worker failed] jobId=${job?.id} name=${job?.name} attempts=${job?.attemptsMade} error=${error.message}`,
+      error.stack,
+    );
   }
 }
