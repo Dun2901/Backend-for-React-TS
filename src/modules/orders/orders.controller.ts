@@ -5,13 +5,14 @@ import { CheckoutDto } from './dto/checkout.dto';
 import { UserRoles } from '@/common/enums';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { Throttle } from '@nestjs/throttler';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @ApiBearerAuth('access-token')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @ApiOperation({ summary: 'User đặt hàng từ giỏ hàng' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('checkout')
   @ResponseMessage('Đặt hàng thành công')
@@ -19,6 +20,7 @@ export class OrdersController {
     return this.ordersService.checkout(user, checkoutDto);
   }
 
+  @ApiOperation({ summary: 'Admin lấy danh sách tất cả đơn hàng' })
   @Get()
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Lấy danh sách đơn hàng thành công')
@@ -30,6 +32,7 @@ export class OrdersController {
     return this.ordersService.findAll(+currentPage, +limit, qs);
   }
 
+  @ApiOperation({ summary: 'User lấy danh sách đơn hàng của mình' })
   @Get('my')
   @ResponseMessage('Lấy danh sách đơn hàng của tôi thành công')
   findMyOrders(
@@ -41,6 +44,8 @@ export class OrdersController {
     return this.ordersService.findMyOrders(+currentPage, +limit, qs, user);
   }
 
+  @ApiOperation({ summary: 'Admin lấy chi tiết đơn hàng' })
+  @ApiParam({ name: 'id', example: '667a1c2b3d4e5f6789012345', description: 'ID đơn hàng' })
   @Get(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Lấy chi tiết đơn hàng thành công')
@@ -48,6 +53,10 @@ export class OrdersController {
     return this.ordersService.findOne(id, user);
   }
 
+  @ApiOperation({
+    summary: 'Admin cập nhật trạng thái đơn hàng',
+  })
+  @ApiParam({ name: 'id', example: '667a1c2b3d4e5f6789012345', description: 'ID đơn hàng' })
   @Patch(':id/status')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Cập nhật trạng thái đơn hàng thành công')
@@ -59,6 +68,8 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, updateOrderStatusDto, user);
   }
 
+  @ApiOperation({ summary: 'User hủy đơn hàng khi đơn còn cho phép hủy' })
+  @ApiParam({ name: 'id', example: '667a1c2b3d4e5f6789012345', description: 'ID đơn hàng' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id/cancel')
   @ResponseMessage('Hủy đơn hàng thành công')

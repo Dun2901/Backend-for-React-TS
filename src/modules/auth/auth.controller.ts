@@ -15,7 +15,7 @@ import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { buildClientRedirectUrl } from '@/common/utils/app-url.util';
 import { Throttle } from '@nestjs/throttler';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -24,6 +24,7 @@ export class AuthController {
     private authService: AuthService,
   ) {}
 
+  @ApiOperation({ summary: 'Đăng nhập bằng email và mật khẩu' })
   @ApiBody({ type: UserLoginDto })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
@@ -34,6 +35,7 @@ export class AuthController {
     return this.authService.login(user, response);
   }
 
+  @ApiOperation({ summary: 'Đăng ký tài khoản' })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/register')
@@ -60,6 +62,7 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
+  @ApiOperation({ summary: 'Lấy thông tin tài khoản đang đăng nhập' })
   @ApiBearerAuth('access-token')
   @Get('account')
   @Serialize(AccountResponseDto)
@@ -86,6 +89,7 @@ export class AuthController {
     return this.authService.logout(refreshToken, response);
   }
 
+  @ApiOperation({ summary: 'Xác thực tài khoản bằng mã gửi qua email' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/verify-code')
@@ -94,6 +98,7 @@ export class AuthController {
     return this.authService.verifyCode(verifyCodeDto);
   }
 
+  @ApiOperation({ summary: 'Gửi lại mã xác thực tài khoản qua email' })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/resend-code')
@@ -114,6 +119,7 @@ export class AuthController {
     return this.authService.changePassword(changePasswordDto, user, response);
   }
 
+  @ApiOperation({ summary: 'Gửi mã qua email để đặt lại mật khẩu mới' })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/forgot-password')
@@ -122,6 +128,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
+  @ApiOperation({ summary: 'Đặt lại mật khẩu bằng mã xác thực' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/reset-password')
