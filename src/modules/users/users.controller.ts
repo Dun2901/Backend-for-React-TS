@@ -44,7 +44,7 @@ export class UsersController {
   @Serialize(UserResponseDto)
   @ResponseMessage('Update my profile')
   updateProfile(@Body() updateUserDto: UpdateUserDto, @User() user: IUser) {
-    return this.usersService.updateProfile(user._id, updateUserDto, user);
+    return this.usersService.updateProfile(user._id, updateUserDto);
   }
 
   @Get(':id')

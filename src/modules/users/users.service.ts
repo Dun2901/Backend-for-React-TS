@@ -13,17 +13,19 @@ import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
-import { MailService } from '@/modules/mail/mail.service';
 import aqp from 'api-query-params';
 import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
 import { authTypeEnum, UserRoles } from '@/common/enums';
 import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { MAIL_JOB, MAIL_QUEUE } from '@/common/constants/queue.constant';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
-    private mailService: MailService,
+    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
   ) {}
 
   async getHashPassword(password: string) {
@@ -32,6 +34,21 @@ export class UsersService {
 
   async isValidPassword(password: string, hash: string) {
     return await bcrypt.compare(password, hash);
+  }
+
+  private async addAuthMailJob(
+    jobName: string,
+    data: {
+      email: string;
+      fullName: string;
+      codeId: string;
+    },
+  ) {
+    try {
+      await this.mailQueue.add(jobName, data);
+    } catch (error) {
+      console.error(`[${jobName}] Add mail queue failed:`, error);
+    }
   }
 
   async create(createUserDto: CreateUserDto, user: IUser) {
@@ -129,7 +146,7 @@ export class UsersService {
     return user;
   }
 
-  async updateProfile(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+  async updateProfile(id: string, updateUserDto: UpdateUserDto) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Not a valid ObjectId!');
     }
@@ -138,10 +155,6 @@ export class UsersService {
       id,
       {
         ...updateUserDto,
-        updatedBy: {
-          _id: user._id,
-          email: user.email,
-        },
       },
       { returnDocument: 'after' },
     );
@@ -219,13 +232,12 @@ export class UsersService {
     });
 
     // Send email
-    this.mailService
-      .sendVerificationEmail({
-        email: newRegister.email,
-        fullName: newRegister.fullName,
-        codeId: newRegister.codeId,
-      })
-      .catch((err) => console.error('Gửi mail không thành công:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_VERIFICATION_EMAIL, {
+      email: newRegister.email,
+      fullName: newRegister.fullName,
+      codeId: newRegister.codeId,
+    });
 
     // Trả ra phản hồi
     return {
@@ -293,6 +305,8 @@ export class UsersService {
       { _id },
       {
         isActive: true,
+        codeId: null,
+        codeExpired: null,
       },
     );
 
@@ -317,13 +331,12 @@ export class UsersService {
     await this.userModel.updateOne({ email }, { codeId: newCode, codeExpired: newExpired });
 
     // send email
-    this.mailService
-      .sendVerificationEmail({
-        email: user.email,
-        fullName: user.fullName,
-        codeId: newCode,
-      })
-      .catch((err) => console.error('Resend mail failed:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_VERIFICATION_EMAIL, {
+      email: user.email,
+      fullName: user.fullName,
+      codeId: newCode,
+    });
 
     return { _id: user._id };
   }
@@ -377,13 +390,12 @@ export class UsersService {
     );
 
     // send email
-    this.mailService
-      .sendResetPasswordEmail({
-        email: user.email,
-        fullName: user.fullName,
-        codeId: newCode,
-      })
-      .catch((err) => console.error('Resend mail failed:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_RESET_PASSWORD, {
+      email: user.email,
+      fullName: user.fullName,
+      codeId: newCode,
+    });
 
     return { _id: user._id, email: user.email };
   }
