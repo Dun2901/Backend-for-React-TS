@@ -7,7 +7,17 @@ import { MAIL_JOB, MAIL_QUEUE } from '@/common/constants/queue.constant';
 import { Order, OrderDocument } from '@/modules/orders/schemas/order.schema';
 import { MailService } from './mail.service';
 
-type MailJobData = { orderId: string };
+type OrderMailJobData = {
+  orderId: string;
+};
+
+type AuthMailJobData = {
+  email: string;
+  fullName: string;
+  codeId: string;
+};
+
+type MailJobData = OrderMailJobData | AuthMailJobData;
 
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends WorkerHost {
@@ -22,12 +32,21 @@ export class MailProcessor extends WorkerHost {
 
   async process(job: Job<MailJobData>) {
     switch (job.name) {
+      case MAIL_JOB.SEND_VERIFICATION_EMAIL:
+        return this.handleSendVerificationEmail(job as Job<AuthMailJobData>);
+
+      case MAIL_JOB.SEND_RESET_PASSWORD:
+        return this.handleSendResetPasswordEmail(job as Job<AuthMailJobData>);
+
       case MAIL_JOB.SEND_ORDER_STATUS:
-        return this.handleSendOrderStatusEmail(job);
+        return this.handleSendOrderStatusEmail(job as Job<OrderMailJobData>);
+
       case MAIL_JOB.SEND_PAYMENT_SUCCESS:
-        return this.handleSendPaymentSuccessEmail(job);
+        return this.handleSendPaymentSuccessEmail(job as Job<OrderMailJobData>);
+
       default:
         this.logger.warn(`[MailProcessor] Unknown job: ${job.name}`);
+        return;
     }
   }
 
@@ -46,9 +65,35 @@ export class MailProcessor extends WorkerHost {
     return user?.email;
   }
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  // ─── Auth Mail Handlers ───────────────────────────────────────────────────
 
-  private async handleSendOrderStatusEmail(job: Job<MailJobData>) {
+  private async handleSendVerificationEmail(job: Job<AuthMailJobData>) {
+    const { email, fullName, codeId } = job.data;
+
+    await this.mailService.sendVerificationEmail({
+      email,
+      fullName,
+      codeId,
+    });
+
+    this.logger.log(`[${MAIL_JOB.SEND_VERIFICATION_EMAIL}] Sent: email=${email}`);
+  }
+
+  private async handleSendResetPasswordEmail(job: Job<AuthMailJobData>) {
+    const { email, fullName, codeId } = job.data;
+
+    await this.mailService.sendResetPasswordEmail({
+      email,
+      fullName,
+      codeId,
+    });
+
+    this.logger.log(`[${MAIL_JOB.SEND_RESET_PASSWORD}] Sent: email=${email}`);
+  }
+
+  // ─── Order Mail Handlers ──────────────────────────────────────────────────
+
+  private async handleSendOrderStatusEmail(job: Job<OrderMailJobData>) {
     const { orderId } = job.data;
 
     const order = await this.findOrderWithUser(orderId);
@@ -69,7 +114,7 @@ export class MailProcessor extends WorkerHost {
     this.logger.log(`[${MAIL_JOB.SEND_ORDER_STATUS}] Sent: orderId=${orderId}`);
   }
 
-  private async handleSendPaymentSuccessEmail(job: Job<MailJobData>) {
+  private async handleSendPaymentSuccessEmail(job: Job<OrderMailJobData>) {
     const { orderId } = job.data;
 
     const order = await this.findOrderWithUser(orderId);
