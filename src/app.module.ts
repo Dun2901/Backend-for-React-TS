@@ -23,6 +23,7 @@ import { AddressesModule } from './modules/addresses/addresses.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import { BullModule } from '@nestjs/bullmq';
@@ -48,6 +49,7 @@ import { parseRedisConnection } from './common/utils/redis-connection.util';
     LocationsModule,
     AddressesModule,
     NotificationsModule,
+    ChatbotModule,
 
     ThrottlerModule.forRoot({
       throttlers: [
