@@ -39,21 +39,43 @@ export class BooksService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    // console.log('[DB QUERY] BooksService.findAll chạy vào MongoDB');
     const { filter, sort } = aqp(qs);
 
     delete filter.current;
     delete filter.pageSize;
 
-    const { current, pageSize, skip } = getPaginationParams({
-      currentPage,
-      limit,
-    });
+    if (filter.mainText) {
+      let searchWord = '';
+      if (filter.mainText instanceof RegExp) {
+        searchWord = filter.mainText.source;
+      } else if (typeof filter.mainText === 'string') {
+        searchWord = filter.mainText.replace(/^\/|\/[ai]*$/g, '');
+      }
 
-    const finalSort = {
-      ...(sort as Record<string, 1 | -1>),
-      _id: -1 as const,
-    };
+      if (searchWord) {
+        //các từ đệm, từ gây nhiễu cần loại bỏ
+        const stopwords = ['sách', 'truyện', 'tìm', 'cuốn', 'bộ', 'về', 'những', 'các'];
+
+        //tách từ và loại bỏ các từ nằm trong danh sách stopwords
+        const words = searchWord
+          .trim()
+          .split(/\s+/)
+          .filter((w) => w.length > 0 && !stopwords.includes(w.toLowerCase()));
+
+        if (words.length > 0) {
+          const safeWords = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+          const strictRegexString = safeWords.map((w) => `(?=.*${w})`).join('');
+
+          filter['mainText'] = { $regex: `^${strictRegexString}`, $options: 'i' };
+        } else {
+          if (searchWord.trim().length > 0) {
+            filter['mainText'] = { $regex: searchWord.trim(), $options: 'i' };
+          }
+        }
+      }
+    }
+    const { current, pageSize, skip } = getPaginationParams({ currentPage, limit });
+    const finalSort = { ...(sort as Record<string, 1 | -1>), _id: -1 as const };
 
     const [result, totalItems] = await Promise.all([
       this.bookModel
@@ -61,23 +83,12 @@ export class BooksService {
         .skip(skip)
         .limit(pageSize)
         .sort(finalSort)
-        .populate({
-          path: 'category',
-          select: 'name slug',
-        })
+        .populate({ path: 'category', select: 'name slug' })
         .exec(),
-
       this.bookModel.countDocuments(filter),
     ]);
 
-    return {
-      meta: getPaginationMeta({
-        current,
-        pageSize,
-        total: totalItems,
-      }),
-      result,
-    };
+    return { meta: getPaginationMeta({ current, pageSize, total: totalItems }), result };
   }
 
   async findOne(id: string) {
