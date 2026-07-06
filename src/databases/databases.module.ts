@@ -4,10 +4,7 @@ import { DatabasesController } from './databases.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@/modules/users/schemas/user.schema';
 import { Book, BookSchema } from '@/modules/books/schemas/book.schema';
-import {
-  Category,
-  CategorySchema,
-} from '@/modules/categories/schemas/category.schema';
+import { Category, CategorySchema } from '@/modules/categories/schemas/category.schema';
 import { UsersModule } from '@/modules/users/users.module';
 
 @Module({

@@ -5,9 +5,7 @@ import { HistoryService } from './history.service';
 import { Order, OrderSchema } from '../orders/schemas/order.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }])],
   controllers: [HistoryController],
   providers: [HistoryService],
 })

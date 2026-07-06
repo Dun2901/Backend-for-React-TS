@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ResponseMessage, Roles, User } from '@/common/decorators/customize';
 import { CheckoutDto } from './dto/checkout.dto';
 import { UserRoles } from '@/common/enums';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @ApiBearerAuth('access-token')
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

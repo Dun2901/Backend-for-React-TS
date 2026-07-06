@@ -5,9 +5,6 @@ export const hashToken = async (token: string): Promise<string> => {
   return bcrypt.hash(token, saltRounds);
 };
 
-export const compareToken = async (
-  token: string,
-  hashedToken: string,
-): Promise<boolean> => {
+export const compareToken = async (token: string, hashedToken: string): Promise<boolean> => {
   return bcrypt.compare(token, hashedToken);
 };

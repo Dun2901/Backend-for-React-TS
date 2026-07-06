@@ -28,6 +28,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import { BullModule } from '@nestjs/bullmq';
 import { parseRedisConnection } from './common/utils/redis-connection.util';
+import { WishlistsModule } from './modules/wishlists/wishlists.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { parseRedisConnection } from './common/utils/redis-connection.util';
     AddressesModule,
     NotificationsModule,
     ChatbotModule,
+    WishlistsModule,
 
     ThrottlerModule.forRoot({
       throttlers: [

@@ -1,10 +1,5 @@
 import { IS_PUBLIC_KEY } from '@/common/decorators/customize';
-import {
-  ExecutionContext,
-  HttpException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ExecutionContext, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TokenExpiredError } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
@@ -38,9 +33,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       // Các lỗi khác → 401
       throw (
         err ||
-        new UnauthorizedException(
-          'Token không hợp lệ/Không có Bearer Token ở Header request!',
-        )
+        new UnauthorizedException('Token không hợp lệ/Không có Bearer Token ở Header request!')
       );
     }
     return user;
