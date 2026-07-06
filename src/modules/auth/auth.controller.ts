@@ -3,10 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { Public, ResponseMessage, User } from '@/common/decorators/customize';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import {
-  RegisterUserDto,
-  VerifyCodeDto,
-} from '@/modules/users/dto/create-user.dto';
+import { RegisterUserDto, UserLoginDto, VerifyCodeDto } from '@/modules/users/dto/create-user.dto';
 import type { Request, Response } from 'express';
 import {
   ChangePasswordDto,
@@ -14,14 +11,22 @@ import {
   ResetPasswordDto,
 } from '@/modules/users/dto/password-user.dto';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
+import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { AccountResponseDto } from './dto/account-response.dto';
+import { buildClientRedirectUrl } from '@/common/utils/app-url.util';
+import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService<IConfigService>,
     private authService: AuthService,
   ) {}
 
+  @ApiOperation({ summary: 'Đăng nhập bằng email và mật khẩu' })
+  @ApiBody({ type: UserLoginDto })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('/login')
@@ -30,6 +35,8 @@ export class AuthController {
     return this.authService.login(user, response);
   }
 
+  @ApiOperation({ summary: 'Đăng ký tài khoản' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/register')
   @ResponseMessage('Register a new user')
@@ -47,22 +54,27 @@ export class AuthController {
   @UseGuards(GoogleOauthGuard)
   async googleCallBack(@User() user: IUser, @Res() res: Response) {
     const { access_token } = await this.authService.login(user, res);
-    res.redirect(`http://localhost:3000?token=${access_token}`);
+
+    const redirectUrl = buildClientRedirectUrl(this.configService, '/', {
+      token: access_token,
+    });
+
+    return res.redirect(redirectUrl);
   }
 
-  @Get('/account')
-  @ResponseMessage('Get user information')
-  handleGetAccount(@User() user: IUser) {
-    return { user };
+  @ApiOperation({ summary: 'Lấy thông tin tài khoản đang đăng nhập' })
+  @ApiBearerAuth('access-token')
+  @Get('account')
+  @Serialize(AccountResponseDto)
+  @ResponseMessage('Get user account')
+  getAccount(@User() user: IUser) {
+    return this.authService.getAccount(user);
   }
 
   @Public()
   @Get('/refresh')
   @ResponseMessage('Get user refresh token')
-  handleRefreshToken(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  handleRefreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = request.cookies['refresh_token'] as string;
 
     return this.authService.processNewToken(refreshToken, response);
@@ -77,6 +89,8 @@ export class AuthController {
     return this.authService.logout(refreshToken, response);
   }
 
+  @ApiOperation({ summary: 'Xác thực tài khoản bằng mã gửi qua email' })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/verify-code')
   @ResponseMessage('Verify code')
@@ -84,6 +98,8 @@ export class AuthController {
     return this.authService.verifyCode(verifyCodeDto);
   }
 
+  @ApiOperation({ summary: 'Gửi lại mã xác thực tài khoản qua email' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/resend-code')
   @ResponseMessage('Resend verify code')
@@ -91,12 +107,20 @@ export class AuthController {
     return this.authService.resendVerifyCode(email);
   }
 
+  @ApiBearerAuth('access-token')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch('/change-password')
   @ResponseMessage('Change password')
-  changePassword(@Body() changePasswordDto: ChangePasswordDto, @User() user: IUser) {
-    return this.authService.changePassword(changePasswordDto, user);
+  changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @User() user: IUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.changePassword(changePasswordDto, user, response);
   }
 
+  @ApiOperation({ summary: 'Gửi mã qua email để đặt lại mật khẩu mới' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('/forgot-password')
   @ResponseMessage('Send reset password email')
@@ -104,6 +128,8 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
+  @ApiOperation({ summary: 'Đặt lại mật khẩu bằng mã xác thực' })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('/reset-password')
   @ResponseMessage('Reset password')

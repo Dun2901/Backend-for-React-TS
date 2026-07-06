@@ -3,11 +3,12 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
-import { MailModule } from '@/modules/mail/mail.module';
+import { BullModule } from '@nestjs/bullmq';
+import { MAIL_QUEUE } from '@/common/constants/queue.constant';
 
 @Module({
   imports: [
-    MailModule,
+    BullModule.registerQueue({ name: MAIL_QUEUE }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UsersController],

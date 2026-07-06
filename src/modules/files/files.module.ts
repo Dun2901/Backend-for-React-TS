@@ -3,6 +3,7 @@ import { FilesService } from './files.service';
 import { FilesController } from './files.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { MulterConfigService } from './multer.config';
+import { CloudinaryService } from './cloudinary.service';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { MulterConfigService } from './multer.config';
     }),
   ],
   controllers: [FilesController],
-  providers: [FilesService],
+  providers: [FilesService, CloudinaryService],
+  exports: [FilesService, CloudinaryService],
 })
 export class FilesModule {}

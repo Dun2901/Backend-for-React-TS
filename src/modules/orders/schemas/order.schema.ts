@@ -58,8 +58,7 @@ export class ShippingAddress {
   address: string;
 }
 
-export const ShippingAddressSchema =
-  SchemaFactory.createForClass(ShippingAddress);
+export const ShippingAddressSchema = SchemaFactory.createForClass(ShippingAddress);
 
 @Schema({ timestamps: true })
 export class Order {
@@ -107,6 +106,12 @@ export class Order {
 
   @Prop({ type: Object })
   updatedBy: { _id: mongoose.Types.ObjectId; email: string };
+
+  @Prop()
+  createdAt: Date;
+
+  @Prop()
+  updatedAt: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

@@ -1,10 +1,4 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 interface HttpExceptionResponse {
@@ -22,8 +16,7 @@ export const getStatusCode = <T>(exception: T): number => {
 export const getErrorMessage = <T>(exception: T): string | string[] => {
   if (exception instanceof HttpException) {
     const errorResponse = exception.getResponse();
-    const errorMessage =
-      (errorResponse as HttpExceptionResponse).message || exception.message;
+    const errorMessage = (errorResponse as HttpExceptionResponse).message || exception.message;
 
     return errorMessage;
   } else {

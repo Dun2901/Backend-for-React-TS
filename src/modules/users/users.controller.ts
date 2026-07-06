@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,7 +7,9 @@ import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { UserRoles } from '@/common/enums';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserAdminResponseDto } from './dto/user-admin-response.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -40,6 +33,20 @@ export class UsersController {
     return this.usersService.findAll(+currentPage, +limit, qs);
   }
 
+  @Get('profile')
+  @Serialize(UserResponseDto)
+  @ResponseMessage('Fetch my profile')
+  getProfile(@User() user: IUser) {
+    return this.usersService.getProfile(user._id);
+  }
+
+  @Patch('profile')
+  @Serialize(UserResponseDto)
+  @ResponseMessage('Update my profile')
+  updateProfile(@Body() updateUserDto: UpdateUserDto, @User() user: IUser) {
+    return this.usersService.updateProfile(user._id, updateUserDto);
+  }
+
   @Get(':id')
   @Serialize(UserResponseDto)
   @ResponseMessage('Fetch user by id')
@@ -50,11 +57,7 @@ export class UsersController {
   @Patch(':id')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Update a user')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @User() user: IUser,
-  ) {
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @User() user: IUser) {
     return this.usersService.update(id, updateUserDto, user);
   }
 

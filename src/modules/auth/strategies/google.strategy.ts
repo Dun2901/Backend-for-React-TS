@@ -3,26 +3,23 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-google-oauth20';
 import { AuthService } from '../auth.service';
+import { getGoogleRedirectUrl } from '@/common/utils/app-url.util';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService<IConfigService>,
     private readonly authService: AuthService,
   ) {
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID')!,
       clientSecret: configService.get<string>('GOOGLE_SECRET')!,
-      callbackURL: configService.get<string>('GOOGLE_REDIRECT_URL'),
+      callbackURL: getGoogleRedirectUrl(configService),
       scope: ['profile', 'email'],
     });
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: Profile,
-  ): Promise<any> {
+  async validate(accessToken: string, refreshToken: string, profile: Profile): Promise<any> {
     const googleUser: IGoogleUser = {
       fullName: profile.displayName,
       email: profile.emails?.[0]?.value ?? '',
@@ -31,6 +28,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.authService.validateUserGoogle(googleUser);
 
-    return { ...googleUser, ...user };
+    return {
+      _id: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      phone: user.phone,
+      avatar: user.avatar ?? googleUser.avatar,
+      tokenVersion: user.tokenVersion ?? 0,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,18 +6,31 @@ import { Book, BookDocument } from './schemas/book.schema';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class BooksService {
   constructor(
-    @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
+    @InjectModel(Book.name)
+    private bookModel: SoftDeleteModel<BookDocument>,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
+
+  private async clearCache() {
+    await this.cacheManager.clear();
+  }
 
   async create(createBookDto: CreateBookDto, user: IUser) {
     const newBook = await this.bookModel.create({
       ...createBookDto,
       createdBy: { _id: user._id, email: user.email },
     });
+
+    await this.clearCache();
 
     return {
       _id: newBook._id,
@@ -27,49 +40,67 @@ export class BooksService {
 
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort } = aqp(qs);
+
     delete filter.current;
     delete filter.pageSize;
 
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
+    if (filter.mainText) {
+      let searchWord = '';
+      if (filter.mainText instanceof RegExp) {
+        searchWord = filter.mainText.source;
+      } else if (typeof filter.mainText === 'string') {
+        searchWord = filter.mainText.replace(/^\/|\/[ai]*$/g, '');
+      }
 
-    const totalItems = (await this.bookModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+      if (searchWord) {
+        //các từ đệm, từ gây nhiễu cần loại bỏ
+        const stopwords = ['sách', 'truyện', 'tìm', 'cuốn', 'bộ', 'về', 'những', 'các'];
 
-    const result = await this.bookModel
-      .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
-      .sort(sort as any)
-      .populate({
-        path: 'category',
-        select: 'name slug',
-      })
-      .exec();
+        //tách từ và loại bỏ các từ nằm trong danh sách stopwords
+        const words = searchWord
+          .trim()
+          .split(/\s+/)
+          .filter((w) => w.length > 0 && !stopwords.includes(w.toLowerCase()));
 
-    return {
-      meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
-      },
-      result, //kết quả query
-    };
+        if (words.length > 0) {
+          const safeWords = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+          const strictRegexString = safeWords.map((w) => `(?=.*${w})`).join('');
+
+          filter['mainText'] = { $regex: `^${strictRegexString}`, $options: 'i' };
+        } else {
+          if (searchWord.trim().length > 0) {
+            filter['mainText'] = { $regex: searchWord.trim(), $options: 'i' };
+          }
+        }
+      }
+    }
+    const { current, pageSize, skip } = getPaginationParams({ currentPage, limit });
+    const finalSort = { ...(sort as Record<string, 1 | -1>), _id: -1 as const };
+
+    const [result, totalItems] = await Promise.all([
+      this.bookModel
+        .find(filter)
+        .skip(skip)
+        .limit(pageSize)
+        .sort(finalSort)
+        .populate({ path: 'category', select: 'name slug' })
+        .exec(),
+      this.bookModel.countDocuments(filter),
+    ]);
+
+    return { meta: getPaginationMeta({ current, pageSize, total: totalItems }), result };
   }
 
   async findOne(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(
-        `Book với id = ${id} không tồn tại trên hệ thống.`,
-      );
+      throw new BadRequestException(`Book với id = ${id} không tồn tại trên hệ thống.`);
     }
 
     return await this.bookModel.findById(id).populate('category');
   }
 
   async update(id: string, updateBookDto: UpdateBookDto, user: IUser) {
-    return await this.bookModel.updateOne(
+    const result = await this.bookModel.updateOne(
       { _id: id },
       {
         ...updateBookDto,
@@ -79,15 +110,21 @@ export class BooksService {
         },
       },
     );
+
+    await this.clearCache();
+
+    return result;
   }
 
   async remove(id: string, deletedBy?: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(
-        `Book với id = ${id} không tồn tại trên hệ thống.`,
-      );
+      throw new BadRequestException(`Book với id = ${id} không tồn tại trên hệ thống.`);
     }
 
-    return await this.bookModel.delete({ _id: id }, deletedBy);
+    const result = await this.bookModel.delete({ _id: id }, deletedBy);
+
+    await this.clearCache();
+
+    return result;
   }
 }

@@ -1,0 +1,1973 @@
+{
+  "info": {
+    "_postman_id": "044d7956-bf60-4301-8752-3a2a124abd20",
+    "name": "NestJS for React",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33563446"
+  },
+  "item": [
+    {
+      "name": "Module auth",
+      "item": [
+        {
+          "name": "Verify code",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_id",
+                  "value": "69ce972324d68de8e0cb9136",
+                  "type": "default"
+                },
+                {
+                  "key": "codeId",
+                  "value": "7c2c9135-7fc0-4921-afee-2cd8131e40d6",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/verify-code",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-code"
+              ]
+            },
+            "description": "Xác minh mã OTP được gửi về email sau khi đăng ký. Tài khoản chỉ được kích hoạt sau bước này.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| _id | string | ✅ | ID người dùng vừa đăng ký |\n| codeId | string | ✅ | Mã OTP nhận qua email |"
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "fullName",
+                  "value": "Dung test test",
+                  "type": "default"
+                },
+                {
+                  "key": "email",
+                  "value": "kophaidun@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "default"
+                },
+                {
+                  "key": "phone",
+                  "value": "2323",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/register",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Đăng ký tài khoản người dùng mới. Sau khi thành công, hệ thống gửi mã OTP về email để xác minh.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| fullName | string | ✅ | Họ và tên đầy đủ |\n| email | string | ✅ | Email đăng ký |\n| password | string | ✅ | Mật khẩu |\n| phone | string | ✅ | Số điện thoại |"
+          },
+          "response": []
+        },
+        {
+          "name": "Resend code",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "admin1@gmail.com",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/resend-code",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-code"
+              ]
+            },
+            "description": "Gửi lại mã OTP xác minh trong trường hợp mã cũ đã hết hạn.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| email | string | ✅ | Email đã đăng ký |"
+          },
+          "response": []
+        },
+        {
+          "name": "Passport login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "admin@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/login",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập bằng email và mật khẩu qua Passport.js Local Strategy. Trả về access_token và refresh_token.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| username | string | ✅ | Email |\n| password | string | ✅ | Mật khẩu |"
+          },
+          "response": []
+        },
+        {
+          "name": "Get account",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/account",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "account"
+              ]
+            },
+            "description": "Lấy thông tin tài khoản của người dùng đang đăng nhập dựa trên Bearer Token.\n\n**Auth:** Bearer Token (access_token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get new token (Refresh)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "dung@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/refresh",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Dùng refresh_token để lấy access_token mới khi token cũ hết hạn. Giúp duy trì phiên đăng nhập mà không cần nhập lại mật khẩu.\n\n**Auth:** Bearer Token (refresh_token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/logout",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Đăng xuất khỏi hệ thống. Vô hiệu hóa refresh_token hiện tại trên server.\n\n**Auth:** Bearer Token (access_token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot-password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "admin1@gmail.com",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Gửi email chứa mã xác nhận để đặt lại mật khẩu.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| email | string | ✅ | Email tài khoản |"
+          },
+          "response": []
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "dung@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "codeId",
+                  "value": "a365757e-f720-4f2a-b300-48c9558d4b51",
+                  "type": "default"
+                },
+                {
+                  "key": "newPassword",
+                  "value": "123456",
+                  "type": "default"
+                },
+                {
+                  "key": "confirmPassword",
+                  "value": "123456",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/reset-password",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Đặt lại mật khẩu mới bằng mã xác nhận đã nhận qua email.\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| email | string | ✅ | Email tài khoản |\n| codeId | string | ✅ | Mã xác nhận từ email |\n| newPassword | string | ✅ | Mật khẩu mới |\n| confirmPassword | string | ✅ | Xác nhận mật khẩu |"
+          },
+          "response": []
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "oldPassword",
+                  "value": "123456",
+                  "type": "default"
+                },
+                {
+                  "key": "newPassword",
+                  "value": "12",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/auth/change-password",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Người dùng muốn thay đổi mật khẩu. Yêu cầu nhập mật khẩu cũ để xác thực.\n\n**Auth:** Bearer Token (access_token)\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| oldPassword | string | ✅ | Mật khẩu cũ |\n| newPassword | string | ✅ | Mật khẩu mới |"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module mail",
+      "item": [
+        {
+          "name": "Test send email",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "kophaidun@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8081/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module user",
+      "item": [
+        {
+          "name": "Get user by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/6a0f2852abd0bd1004dcfebb",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "6a0f2852abd0bd1004dcfebb"
+              ]
+            },
+            "description": "Lấy thông tin chi tiết của một người dùng theo ID.\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |"
+          },
+          "response": []
+        },
+        {
+          "name": "Update user by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "fullName",
+                  "value": "test ko bu23323223",
+                  "type": "default"
+                },
+                {
+                  "key": "phone",
+                  "value": "999",
+                  "type": "default"
+                },
+                {
+                  "key": "avatar",
+                  "value": "",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/6a01f8b622221177fb833532",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "6a01f8b622221177fb833532"
+              ]
+            },
+            "description": "Cập nhật thông tin người dùng theo ID.\n\n**Auth:** Bearer Token (access_token)\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| fullName | string | ❌ | Họ và tên mới |\n| phone | string | ❌ | Số điện thoại mới |\n| avatar | string | ❌ | Ảnh đại diện |"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/69e911cd767e1bc294703f58",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "69e911cd767e1bc294703f58"
+              ]
+            },
+            "description": "Xóa người dùng theo ID. Yêu cầu quyền ADMIN.\n\n**Auth:** Bearer Token (access_token)\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |"
+          },
+          "response": []
+        },
+        {
+          "name": "Create a user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "kophaidun@gmail.com",
+                  "type": "default"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "default"
+                },
+                {
+                  "key": "fullName",
+                  "value": "Dung test test",
+                  "type": "default"
+                },
+                {
+                  "key": "phone",
+                  "value": "234",
+                  "type": "default"
+                },
+                {
+                  "key": "role",
+                  "value": "USER",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "description": "Tạo mới người dùng (dành cho ADMIN). Cho phép chỉ định role khác với đăng ký thông thường.\n\n**Auth:** Bearer Token (access_token)\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| fullName | string | ✅ | Họ và tên |\n| email | string | ✅ | Email |\n| password | string | ✅ | Mật khẩu |\n| phone | string | ✅ | Số điện thoại |\n| role | string | ✅ | `USER` hoặc `ADMIN` |"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch user with paginate",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/?current=1&pageSize=10?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        },
+        {
+          "name": "Get profile user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/profile",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update profile user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDg5Mjc5MiwiZXhwIjoxNzgxNDkyNzkyfQ.-HnYsKmYXwbVGnQDPVgml8_KODgWv90kWyR4B9wjy1w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Dung test profile\",\r\n    \"phone\": \"2345678000000\",\r\n    \"avatar\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/users/profile",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module book",
+      "item": [
+        {
+          "name": "Create a book",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"thumbnail\": \"https://example.com/images/travel-book.jpg\",\r\n    \"slider\": [\r\n      \"https://example.com/images/travel-1.jpg\",\r\n      \"https://example.com/images/travel-2.jpg\"\r\n    ],\r\n    \"mainText\": \"Into the Wild\",\r\n    \"author\": \"Jon Krakauer\",\r\n    \"price\": 198000,\r\n    \"quantity\": 70,\r\n    \"category\": \"Travel\"\r\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/books",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update book by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"thumbnail\": \"https://example.com/images/history-book.jpg\",\r\n    \"slider\": [\r\n        \"https://example.com/images/history-1.jpg\",\r\n        \"https://example.com/images/history-2.jpg\"\r\n    ],\r\n    \"mainText\": \"Sapiens: A Brief History of Humankind\",\r\n    \"author\": \"Yuval Noah Harari\",\r\n    \"price\": 250000,\r\n    \"quantity\": 100,\r\n    \"category\": \"History\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/books/69de88f4bd28dd7cffc3c895",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books",
+                "69de88f4bd28dd7cffc3c895"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get book by id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "company",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"thumbnail\": \"https://example.com/images/history-book.jpg\",\r\n    \"slider\": [\r\n        \"https://example.com/images/history-1.jpg\",\r\n        \"https://example.com/images/history-2.jpg\"\r\n    ],\r\n    \"mainText\": \"Sapiens: A Brief History of Humankind\",\r\n    \"author\": \"Yuval Noah Harari\",\r\n    \"price\": 250000,\r\n    \"quantity\": 80,\r\n    \"category\": \"History\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/books/69de88f4bd28dd7cffc3c895",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books",
+                "69de88f4bd28dd7cffc3c895"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete book",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/books/69dfbd38ad59debecd69a5c2",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books",
+                "69dfbd38ad59debecd69a5c2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch book with paginate",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/books/?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module upload file",
+      "item": [
+        {
+          "name": "Upload image book",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "book",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/C:/Users/ASUS/OneDrive/Hình ảnh/Saved Pictures/1.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/files/upload",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload avatar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "avatar",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/C:/Users/ASUS/OneDrive/Hình ảnh/Saved Pictures/1.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/files/upload",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload image book multiple",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "folder_type",
+                "value": "book",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": [
+                    "/C:/Users/ASUS/OneDrive/Hình ảnh/Saved Pictures/1.png",
+                    "/C:/Users/ASUS/OneDrive/Hình ảnh/Saved Pictures/4.png"
+                  ]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/files/upload-multiple",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "upload-multiple"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module category",
+      "item": [
+        {
+          "name": "Create a category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "name",
+                  "value": "lá",
+                  "type": "default"
+                },
+                {
+                  "key": "slug",
+                  "value": "la",
+                  "type": "default"
+                },
+                {
+                  "key": "description",
+                  "value": "abc",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/6a0c344a68c1399d5bc869aa",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "6a0c344a68c1399d5bc869aa"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch category with paginate",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        },
+        {
+          "name": "Get category by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/6a0c344a68c1399d5bc869ab",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "6a0c344a68c1399d5bc869ab"
+              ]
+            },
+            "description": "Lấy thông tin chi tiết của một người dùng theo ID.\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |"
+          },
+          "response": []
+        },
+        {
+          "name": "Update category by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "name",
+                  "value": "lá",
+                  "type": "default",
+                  "disabled": true
+                },
+                {
+                  "key": "slug",
+                  "value": "la la",
+                  "type": "default",
+                  "disabled": true
+                },
+                {
+                  "key": "description",
+                  "value": "test",
+                  "type": "default"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/6a0c344a68c1399d5bc869aa",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "6a0c344a68c1399d5bc869aa"
+              ]
+            },
+            "description": "Cập nhật thông tin người dùng theo ID.\n\n**Auth:** Bearer Token (access_token)\n\n**Path Params**\n\n| Param | Description |\n| --- | --- |\n| id | MongoDB ObjectId của user |\n\n**Body (x-www-form-urlencoded)**\n\n| Field | Type | Required | Description |\n| --- | --- | --- | --- |\n| fullName | string | ❌ | Họ và tên mới |\n| phone | string | ❌ | Số điện thoại mới |\n| avatar | string | ❌ | Ảnh đại diện |"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch categories",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                ""
+              ]
+            },
+            "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        },
+        {
+          "name": "Restore category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/6a0c344a68c1399d5bc869aa/restore",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "6a0c344a68c1399d5bc869aa",
+                "restore"
+              ]
+            },
+            "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch deleted categories",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/categories/deleted",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "deleted"
+              ]
+            },
+            "description": "Lấy danh sách người dùng theo phân trang.\n\n**Auth:** Bearer Token (access_token)\n\n**Query Params**\n\n| Param | Default | Description |\n| --- | --- | --- |\n| current | 1 | Trang hiện tại |\n| pageSize | 10 | Số bản ghi mỗi trang |"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module cart",
+      "item": [
+        {
+          "name": "Add cart item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTM4MDkwOCwiZXhwIjoxNzc5OTgwOTA4fQ.ZYf4OZ44W6Fk7vJJMyKECCXoLIKfm04edSkfiDALr5A",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"bookId\": \"6a0c344a68c1399d5bc869b1\",\r\n    \"quantity\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/carts/items",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carts",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get cart for user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzMjE5NiwiZXhwIjoxNzgwMDMyMTk2fQ.LNxfPRpShy0RWdkZmS2cjwFu9-nnXghb_BpwDvP6c_c",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/carts/me",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carts",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update cart item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"quantity\": 3\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/carts/items/6a0c344a68c1399d5bc869b7",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carts",
+                "items",
+                "6a0c344a68c1399d5bc869b7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove cart item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/carts/items/6a0c344a68c1399d5bc869b7",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carts",
+                "items",
+                "6a0c344a68c1399d5bc869b7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTQzNzA5MiwiZXhwIjoxNzgwMDM3MDkyfQ.DLOeUFJEs7OyVIZS4WTqGkfrXgU3sVBZjv2I0P5A4fs",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/carts/clear",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carts",
+                "clear"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Module order",
+      "item": [
+        {
+          "name": "Get order detail",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/orders/6a0c344a68c1399d5bc869a3",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "6a0c344a68c1399d5bc869a3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update status order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "status",
+                  "value": "PENDING",
+                  "type": "text",
+                  "uuid": "4d08abe0-d7d8-4711-87f3-bd477519b689"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/orders/6a0c344a68c1399d5bc869a3/status",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "6a0c344a68c1399d5bc869a3",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/orders/6a0c344a68c1399d5bc869a3/cancel",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "6a0c344a68c1399d5bc869a3",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get orders with pagination",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDU1NDA3MywiZXhwIjoxNzgxMTU0MDczfQ.U9PepK7KE2lcK9-32C8Fdzm2eEgYvPqIF4dNYGpaGX0",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/orders?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "checkout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc3OTkzNDg4OSwiZXhwIjoxNzgwNTM0ODg5fQ.g7t-sWM6h3kZWoPhamyYc8tNmLc_Sec2qR5nG3XHw8w",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"shippingAddress\": {\r\n        \"fullName\": \"Trần Thị B\",\r\n        \"phone\": \"0912345678\",\r\n        \"address\": \"Thủ Đức, TP.HCM\"\r\n    },\r\n    \"paymentMethod\": \"COD\",\r\n    \"note\": \"test RESPONSE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{backend_url}}/api/v1/orders/checkout",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module history",
+      "item": [
+        {
+          "name": "Get history",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDI4MzYwOCwiZXhwIjoxNzgwODgzNjA4fQ.S-lZlc77tH7MqHt5on2buv1GpO9blB98vM_PFhEedtU",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/history?current=1&pageSize=10",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "current",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get history by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0b2tlbiIsImlzcyI6ImZyb20gc2VydmVyIiwiX2lkIjoiNmEwOWVhYjdmOTQ1OTZlYzMwMmVhYmMzIiwiZnVsbE5hbWUiOiJJJ20gQWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImF2YXRhciI6IjIxMjMyZjI5N2E1N2E1YTc0Mzg5NGEwZTRhODAxZmMzLnBuZyIsImlhdCI6MTc4MDI4MzYwOCwiZXhwIjoxNzgwODgzNjA4fQ.S-lZlc77tH7MqHt5on2buv1GpO9blB98vM_PFhEedtU",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/api/v1/history/6a17b75532ef074f20b1681b",
+              "host": [
+                "{{backend_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "6a17b75532ef074f20b1681b"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "backend_url",
+      "value": "http://localhost:8081"
+    }
+  ]
+}

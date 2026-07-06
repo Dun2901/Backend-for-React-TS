@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,6 +22,26 @@ import { UserRoles } from '@/common/enums';
 import { v4 as uuidv4 } from 'uuid';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CheckoutDto } from './dto/checkout.dto';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { NotificationsService } from '../notifications/notifications.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import {
+  MAIL_JOB,
+  MAIL_QUEUE,
+  NOTIFICATION_JOB,
+  NOTIFICATION_QUEUE,
+} from '@/common/constants/queue.constant';
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING]: 'Chờ xác nhận',
+  [OrderStatus.CONFIRMED]: 'Đã xác nhận',
+  [OrderStatus.SHIPPING]: 'Đang giao',
+  [OrderStatus.COMPLETED]: 'Hoàn thành',
+  [OrderStatus.CANCELLED]: 'Đã hủy',
+};
 
 @Injectable()
 export class OrdersService {
@@ -29,8 +50,18 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
     @InjectModel(Book.name) private bookModel: SoftDeleteModel<BookDocument>,
     @InjectModel(Cart.name) private cartModel: SoftDeleteModel<CartDocument>,
+    private readonly notificationsService: NotificationsService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
+    @InjectQueue(NOTIFICATION_QUEUE) private readonly notificationQueue: Queue,
   ) {}
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private async clearBookCache() {
+    await this.cacheManager.clear();
+  }
+
   private validateObjectId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Mã đơn hàng không hợp lệ');
@@ -45,26 +76,46 @@ export class OrdersService {
   }
 
   private assertCanAccessOrder(order: OrderDocument, user: IUser) {
-    if (user.role === (UserRoles.ADMIN as string)) {
+    if (user.role === UserRoles.ADMIN) {
       return;
     }
+
     if (order.userId.toString() !== user._id) {
       throw new ForbiddenException('Bạn không có quyền truy cập đơn hàng này');
     }
   }
 
-  private validateOrderStatusTransition(
-    currentStatus: OrderStatus,
-    nextStatus: OrderStatus,
-  ) {
-    /*
-     * PENDING   → CONFIRMED | CANCELLED
-     * CONFIRMED → SHIPPING  | CANCELLED
-     * SHIPPING  → COMPLETED
-     * COMPLETED → (không đổi)
-     * CANCELLED → (không đổi)
-     */
+  private getCartItemBookId(item: { bookId: mongoose.Types.ObjectId }) {
+    const bookValue = item.bookId;
 
+    if (bookValue?._id) {
+      return bookValue._id;
+    }
+
+    return bookValue;
+  }
+
+  private calculateCartTotals(
+    items: {
+      quantity: number;
+      priceAtAdd: number;
+    }[],
+  ) {
+    return items.reduce(
+      (result, item) => {
+        result.totalItems += item.quantity;
+        result.totalPrice += item.quantity * item.priceAtAdd;
+
+        return result;
+      },
+      {
+        totalItems: 0,
+        totalPrice: 0,
+      },
+    );
+  }
+
+  private validateOrderStatusTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
     if (currentStatus === nextStatus) {
       throw new BadRequestException('Trạng thái mới phải khác trạng thái hiện tại');
     }
@@ -91,18 +142,14 @@ export class OrdersService {
 
     if (currentStatus === OrderStatus.SHIPPING) {
       if (nextStatus !== OrderStatus.COMPLETED) {
-        throw new BadRequestException(
-          'Đơn hàng đang giao chỉ có thể chuyển sang đã hoàn thành',
-        );
+        throw new BadRequestException('Đơn hàng đang giao chỉ có thể chuyển sang đã hoàn thành');
       }
 
       return;
     }
 
     if (currentStatus === OrderStatus.COMPLETED) {
-      throw new BadRequestException(
-        'Đơn hàng đã hoàn thành, không thể cập nhật trạng thái',
-      );
+      throw new BadRequestException('Đơn hàng đã hoàn thành, không thể cập nhật trạng thái');
     }
 
     if (currentStatus === OrderStatus.CANCELLED) {
@@ -124,7 +171,84 @@ export class OrdersService {
       );
     }
   }
+
+  // ─── Socket emit helpers (vẫn gọi trực tiếp vì cần real-time) ────────────
+
+  private async emitNewOrderToAdminsSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .lean()
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      const user = order.userId as { fullName?: string; email?: string } | undefined;
+
+      this.notificationsService.emitNewOrderToAdmins({
+        order: {
+          _id: order._id.toString(),
+          orderCode: order.orderCode,
+          customerName: user?.fullName || order.shippingAddress?.fullName || 'Khách hàng',
+          customerEmail: user?.email,
+          totalPrice: order.totalPrice,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          createdAt: order.createdAt,
+        },
+      });
+    } catch (error) {
+      console.log('[Emit new order to admins error]', error);
+    }
+  }
+
+  private async emitOrderUpdatedToAdminsSafely(orderId: mongoose.Types.ObjectId) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .lean()
+        .exec();
+
+      if (!order) {
+        return;
+      }
+
+      const user = order.userId as { fullName?: string; email?: string } | undefined;
+
+      this.notificationsService.emitOrderUpdatedToAdmins({
+        order: {
+          _id: order._id.toString(),
+          orderCode: order.orderCode,
+          customerName: user?.fullName || order.shippingAddress?.fullName || 'Khách hàng',
+          customerEmail: user?.email,
+          totalPrice: order.totalPrice,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+        },
+      });
+    } catch (error) {
+      console.log('[Emit order updated to admins error]', error);
+    }
+  }
+
   // ─── Queries ─────────────────────────────────────────────────────────────
+
   async checkout(user: IUser, checkoutDto: CheckoutDto) {
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -139,6 +263,23 @@ export class OrdersService {
         throw new BadRequestException('Giỏ hàng đang trống');
       }
 
+      const selectedBookIdSet =
+        checkoutDto.selectedBookIds && checkoutDto.selectedBookIds.length > 0
+          ? new Set(checkoutDto.selectedBookIds)
+          : new Set(cart.items.map((item) => this.getCartItemBookId(item).toString()));
+
+      const selectedCartItems = cart.items.filter((item) =>
+        selectedBookIdSet.has(this.getCartItemBookId(item).toString()),
+      );
+
+      if (selectedCartItems.length === 0) {
+        throw new BadRequestException('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng');
+      }
+
+      if (selectedBookIdSet.size > selectedCartItems.length) {
+        throw new BadRequestException('Một số sản phẩm được chọn không có trong giỏ hàng');
+      }
+
       const orderItems: {
         bookId: mongoose.Types.ObjectId;
         bookName: string;
@@ -149,8 +290,9 @@ export class OrdersService {
 
       let totalPrice = 0;
 
-      for (const item of cart.items) {
+      for (const item of selectedCartItems) {
         const book = item.bookId as unknown as BookDocument;
+
         if (!book) {
           throw new NotFoundException('Sách không tồn tại');
         }
@@ -173,9 +315,7 @@ export class OrdersService {
         );
 
         if (!updatedBook) {
-          throw new BadRequestException(
-            `Sách "${book.mainText}" không đủ số lượng trong kho`,
-          );
+          throw new BadRequestException(`Sách "${book.mainText}" không đủ số lượng trong kho`);
         }
 
         orderItems.push({
@@ -206,13 +346,23 @@ export class OrdersService {
         { session },
       );
 
+      const remainingCartItems = cart.items
+        .filter((item) => !selectedBookIdSet.has(this.getCartItemBookId(item).toString()))
+        .map((item) => ({
+          bookId: this.getCartItemBookId(item),
+          quantity: item.quantity,
+          priceAtAdd: item.priceAtAdd,
+        }));
+
+      const remainingCartTotals = this.calculateCartTotals(remainingCartItems);
+
       await this.cartModel.updateOne(
         { userId: user._id },
         {
           $set: {
-            items: [],
-            totalItems: 0,
-            totalPrice: 0,
+            items: remainingCartItems,
+            totalItems: remainingCartTotals.totalItems,
+            totalPrice: remainingCartTotals.totalPrice,
           },
         },
         { session },
@@ -225,6 +375,9 @@ export class OrdersService {
 
       await session.commitTransaction();
 
+      await this.clearBookCache();
+      await this.emitNewOrderToAdminsSafely(order._id);
+
       return cleanOrder;
     } catch (error) {
       await session.abortTransaction();
@@ -234,33 +387,77 @@ export class OrdersService {
     }
   }
 
-  async findMyOrders(currentPage: number, limit: number, qs: string, user: IUser) {
-    const { filter } = aqp(qs);
+  async findAll(currentPage: number, limit: number, qs: string) {
+    const { filter, sort } = aqp(qs);
 
     delete filter.current;
     delete filter.pageSize;
 
-    filter.userId = user._id; // => ép query chỉ lấy order của user đang đăng nhập.
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
 
-    const defaultCurrentPage = currentPage || 1;
-    const defaultLimit = limit || 10;
-    const offset = (defaultCurrentPage - 1) * defaultLimit;
+    const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
 
-    const totalItems = await this.orderModel.countDocuments(filter);
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const [result, totalItems] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .skip(skip)
+        .limit(pageSize)
+        .sort(sortOption as any)
+        .populate({
+          path: 'userId',
+          select: 'fullName email',
+        })
+        .select('-deleted -items.deleted -shippingAddress.deleted')
+        .exec(),
+
+      this.orderModel.countDocuments(filter),
+    ]);
+
+    return {
+      meta: getPaginationMeta({
+        current,
+        pageSize,
+        total: totalItems,
+      }),
+      result,
+    };
+  }
+
+  async findMyOrders(currentPage: number, limit: number, qs: string, user: IUser) {
+    const { filter, sort } = aqp(qs);
+
+    delete filter.current;
+    delete filter.pageSize;
+
+    const current = Number(currentPage) || 1;
+    const pageSize = Number(limit) || 10;
+    const offset = (current - 1) * pageSize;
+
+    const sortOption = sort && Object.keys(sort).length > 0 ? sort : { createdAt: -1 };
+
+    const finalFilter = {
+      ...filter,
+      userId: user._id,
+    };
+
+    const totalItems = await this.orderModel.countDocuments(finalFilter);
+    const totalPages = Math.ceil(totalItems / pageSize);
 
     const result = await this.orderModel
-      .find(filter)
+      .find(finalFilter)
       .skip(offset)
-      .limit(defaultLimit)
-      .sort({ createdAt: -1 })
+      .limit(pageSize)
+      .sort(sortOption as any)
       .select('-deleted -items.deleted -shippingAddress.deleted')
       .exec();
 
     return {
       meta: {
-        current: defaultCurrentPage,
-        pageSize: defaultLimit,
+        current,
+        pageSize,
         pages: totalPages,
         total: totalItems,
       },
@@ -268,64 +465,30 @@ export class OrdersService {
     };
   }
 
-  async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, sort } = aqp(qs);
-    delete filter.current;
-    delete filter.pageSize;
-
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
-
-    const totalItems = (await this.orderModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
-
-    const result = await this.orderModel
-      .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
-      .sort(sort as any)
-      .populate({
-        path: 'userId',
-        select: 'fullName email',
-      })
-      .select('-deleted -items.deleted -shippingAddress.deleted')
-      .exec();
-
-    return {
-      meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
-      },
-      result, //kết quả query
-    };
-  }
-
   async findOne(id: string, user: IUser) {
     this.validateObjectId(id);
+
     const order = await this.orderModel
       .findById(id)
       .select('-deleted -items.deleted -shippingAddress.deleted');
+
     if (!order) {
       throw new NotFoundException('Đơn hàng không tồn tại');
     }
 
     this.assertCanAccessOrder(order, user);
-    if (user.role === (UserRoles.ADMIN as string)) {
+
+    if (user.role === UserRoles.ADMIN) {
       await order.populate({
         path: 'userId',
         select: 'fullName email',
       });
     }
+
     return order;
   }
 
-  async updateStatus(
-    id: string,
-    updateOrderStatusDto: UpdateOrderStatusDto,
-    user: IUser,
-  ) {
+  async updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto, user: IUser) {
     this.validateObjectId(id);
 
     const session = await this.connection.startSession();
@@ -333,34 +496,71 @@ export class OrdersService {
 
     try {
       const order = await this.orderModel.findById(id).session(session);
+
       if (!order) {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      this.validateOrderStatusTransition(order.status, updateOrderStatusDto.status);
+      const newStatus = updateOrderStatusDto.status;
 
-      if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
+      this.validateOrderStatusTransition(order.status, newStatus);
+
+      if (newStatus === OrderStatus.CANCELLED) {
         await this.restoreOrderStock(order, session);
+      }
+
+      const updateData: Record<string, unknown> = {
+        status: newStatus,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      };
+
+      if (
+        newStatus === OrderStatus.COMPLETED &&
+        order.paymentMethod === PaymentMethod.COD &&
+        order.paymentStatus === PaymentStatus.UNPAID
+      ) {
+        updateData.paymentStatus = PaymentStatus.PAID;
       }
 
       const updatedOrder = await this.orderModel
         .findOneAndUpdate(
           { _id: id },
-          {
-            status: updateOrderStatusDto.status,
-            updatedBy: {
-              _id: user._id,
-              email: user.email,
-            },
-          },
+          { $set: updateData },
           {
             returnDocument: 'after',
             session,
+            runValidators: true,
           },
         )
         .select('-deleted -items.deleted -shippingAddress.deleted');
 
       await session.commitTransaction();
+
+      if (newStatus === OrderStatus.CANCELLED) {
+        await this.clearBookCache();
+      }
+
+      if (updatedOrder) {
+        const orderId = updatedOrder._id.toString();
+        const statusLabel = ORDER_STATUS_LABEL[newStatus] || newStatus;
+
+        // Socket emit → giữ trực tiếp (real-time admin dashboard)
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrder._id);
+
+        // Mail + Notification → đưa vào queue, xử lý background
+        await Promise.all([
+          this.mailQueue.add(MAIL_JOB.SEND_ORDER_STATUS, { orderId }),
+          this.notificationQueue.add(NOTIFICATION_JOB.CREATE_ORDER_STATUS, {
+            userId: updatedOrder.userId.toString(),
+            orderId,
+            orderCode: updatedOrder.orderCode,
+            statusLabel,
+          }),
+        ]);
+      }
 
       return updatedOrder;
     } catch (error) {
@@ -379,6 +579,7 @@ export class OrdersService {
 
     try {
       const order = await this.orderModel.findById(id).session(session);
+
       if (!order) {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
@@ -386,9 +587,7 @@ export class OrdersService {
       this.assertCanAccessOrder(order, user);
 
       if (order.status !== OrderStatus.PENDING) {
-        throw new BadRequestException(
-          'Bạn chỉ có thể hủy đơn hàng khi đơn đang chờ xác nhận',
-        );
+        throw new BadRequestException('Bạn chỉ có thể hủy đơn hàng khi đơn đang chờ xác nhận');
       }
 
       await this.restoreOrderStock(order, session);
@@ -396,9 +595,7 @@ export class OrdersService {
       const updatedOrder = await this.orderModel
         .findOneAndUpdate(
           { _id: id },
-          {
-            status: OrderStatus.CANCELLED,
-          },
+          { status: OrderStatus.CANCELLED },
           {
             returnDocument: 'after',
             session,
@@ -408,6 +605,12 @@ export class OrdersService {
 
       await session.commitTransaction();
 
+      await this.clearBookCache();
+
+      if (updatedOrder) {
+        await this.emitOrderUpdatedToAdminsSafely(updatedOrder._id);
+      }
+
       return updatedOrder;
     } catch (error) {
       await session.abortTransaction();
@@ -415,5 +618,47 @@ export class OrdersService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async findById(id: string) {
+    return this.orderModel.findById(id);
+  }
+
+  async findByOrderCode(orderCode: string) {
+    return this.orderModel.findOne({ orderCode });
+  }
+
+  async markPaid(orderId: string) {
+    const updatedOrder = await this.orderModel.findOneAndUpdate(
+      {
+        _id: orderId,
+        paymentStatus: { $ne: PaymentStatus.PAID },
+      },
+      {
+        $set: { paymentStatus: PaymentStatus.PAID },
+      },
+      {
+        returnDocument: 'after',
+        runValidators: true,
+      },
+    );
+
+    if (!updatedOrder) {
+      return this.orderModel.findById(orderId);
+    }
+
+    const oid = updatedOrder._id.toString();
+
+    // Mail + Notification → queue
+    await Promise.all([
+      this.mailQueue.add(MAIL_JOB.SEND_PAYMENT_SUCCESS, { orderId: oid }),
+      this.notificationQueue.add(NOTIFICATION_JOB.CREATE_PAYMENT_SUCCESS, {
+        userId: updatedOrder.userId.toString(),
+        orderId: oid,
+        orderCode: updatedOrder.orderCode,
+      }),
+    ]);
+
+    return updatedOrder;
   }
 }

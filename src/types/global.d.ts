@@ -1,9 +1,14 @@
+import { UserRoles } from '@/common/enums';
+
 export {};
 
 declare global {
   interface IConfigService {
     PORT?: number;
     MONGODB_URL?: string;
+
+    CLIENT_URL?: string;
+    SERVER_URL?: string;
 
     JWT_ACCESS_SECRET?: string;
     JWT_ACCESS_EXPIRE?: string | number;
@@ -21,13 +26,29 @@ declare global {
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_SECRET?: string;
     GOOGLE_REDIRECT_URL?: string;
+
+    VNPAY_TMN_CODE?: string;
+    VNPAY_SECURE_SECRET?: string;
+
+    VNPAY_URL?: string;
+    VNPAY_RETURN_URL?: string;
+    VNPAY_IPN_URL?: string;
+    VNPAY_TEST_MODE?: boolean;
+
+    CLOUDINARY_CLOUD_NAME?: string;
+    CLOUDINARY_API_KEY?: string;
+    CLOUDINARY_API_SECRET?: string;
+    CLOUDINARY_AVATAR_FOLDER?: string;
+    CLOUDINARY_BOOK_FOLDER?: string;
+    CLOUDINARY_REVIEW_FOLDER?: string;
+    CLOUDINARY_ROOT_FOLDER?: string;
   }
 
   interface IUser {
     _id: string;
     fullName: string;
     email: string;
-    role: string;
+    role: UserRoles;
     phone: string;
     avatar: string;
   }
@@ -38,8 +59,9 @@ declare global {
     _id: string;
     fullName: string;
     email: string;
-    role: string;
+    role: UserRoles;
     avatar: string;
+    tokenVersion: number;
   }
 
   interface IGoogleUser {

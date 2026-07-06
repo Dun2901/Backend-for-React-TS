@@ -30,6 +30,24 @@ export class Book {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Category.name })
   category: mongoose.Types.ObjectId;
 
+  @Prop({ default: 0 })
+  averageRating: number;
+
+  @Prop({ default: 0 })
+  reviewCount: number;
+
+  @Prop({
+    type: Object,
+    default: () => ({
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    }),
+  })
+  ratingSummary: Record<number, number>;
+
   @Prop({ type: Object })
   createdBy: {
     _id: mongoose.Types.ObjectId;

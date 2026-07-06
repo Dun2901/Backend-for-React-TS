@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import type { SoftDeleteModel } from 'mongoose-delete';
-import { Cart, CartDocument } from './schemas/cart.schema';
+import { Cart, CartDocument, CartItem } from './schemas/cart.schema';
 import { Book, BookDocument } from '@/modules/books/schemas/book.schema';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
@@ -57,51 +57,59 @@ export class CartsService {
     }
 
     const cart = await this.findOrCreateCart(userId);
-    const existingItem = cart.items.find((item) => item.bookId.equals(bookId));
-    if (existingItem) {
+
+    const existingItemIndex = cart.items.findIndex((item) => item.bookId.equals(bookId));
+
+    if (existingItemIndex !== -1) {
+      const existingItem = cart.items[existingItemIndex];
+
       const newQuantity = existingItem.quantity + quantity;
+
       if (newQuantity > book.quantity) {
         throw new BadRequestException(
           `Tổng quantity (${newQuantity}) vượt quá tồn kho (${book.quantity})`,
         );
       }
 
-      return this.cartModel
-        .findOneAndUpdate(
-          { userId, 'items.bookId': bookId },
-          {
-            $inc: {
-              'items.$.quantity': quantity,
-              totalItems: quantity,
-              totalPrice: quantity * existingItem.priceAtAdd,
-            },
-          },
-          { returnDocument: 'after' },
-        )
-        .select(SELECT_FIELDS)
-        .populate(POPULATE_BOOK);
-    } else {
-      if (quantity > book.quantity) {
-        throw new BadRequestException(
-          `Quantity (${quantity}) vượt quá tồn kho (${book.quantity})`,
-        );
-      }
+      const movedItem: CartItem = {
+        bookId: new mongoose.Types.ObjectId(bookId),
+        quantity: newQuantity,
+        priceAtAdd: existingItem.priceAtAdd,
+      };
 
-      return this.cartModel
-        .findOneAndUpdate(
-          { userId },
-          {
-            $push: { items: { bookId, quantity, priceAtAdd: book.price } },
-            $inc: {
-              totalItems: quantity,
-              totalPrice: quantity * book.price,
-            },
-          },
-          { returnDocument: 'after' },
-        )
-        .select(SELECT_FIELDS)
-        .populate(POPULATE_BOOK);
+      // Xóa item cũ khỏi vị trí hiện tại
+      cart.items.splice(existingItemIndex, 1);
+
+      // Đưa item vừa thêm lên đầu giỏ hàng
+      cart.items.unshift(movedItem);
+
+      cart.totalItems = cart.totalItems + quantity;
+      cart.totalPrice = cart.totalPrice + quantity * existingItem.priceAtAdd;
+
+      await cart.save();
+
+      return this.getMyCart(userId);
     }
+
+    if (quantity > book.quantity) {
+      throw new BadRequestException(`Quantity (${quantity}) vượt quá tồn kho (${book.quantity})`);
+    }
+
+    const newItem: CartItem = {
+      bookId: new mongoose.Types.ObjectId(bookId),
+      quantity,
+      priceAtAdd: book.price,
+    };
+
+    // Thêm sản phẩm mới vào đầu mảng items
+    cart.items.unshift(newItem);
+
+    cart.totalItems = cart.totalItems + quantity;
+    cart.totalPrice = cart.totalPrice + quantity * book.price;
+
+    await cart.save();
+
+    return this.getMyCart(userId);
   }
 
   async updateItem(userId: string, bookId: string, updateCartItemDto: UpdateCartItemDto) {
@@ -117,13 +125,12 @@ export class CartsService {
     }
 
     if (quantity > book.quantity) {
-      throw new BadRequestException(
-        `Quantity (${quantity}) vượt quá tồn kho (${book.quantity})`,
-      );
+      throw new BadRequestException(`Quantity (${quantity}) vượt quá tồn kho (${book.quantity})`);
     }
 
     const cart = await this.cartModel.findOne({ userId });
     const existingItem = cart?.items.find((item) => item.bookId.equals(bookId));
+
     if (!existingItem) {
       throw new NotFoundException('Sách này chưa có trong giỏ hàng');
     }
@@ -151,6 +158,7 @@ export class CartsService {
 
     const cart = await this.cartModel.findOne({ userId });
     const existingItem = cart?.items.find((item) => item.bookId.equals(bookId));
+
     if (!existingItem) {
       throw new NotFoundException('Sách này chưa có trong giỏ hàng');
     }

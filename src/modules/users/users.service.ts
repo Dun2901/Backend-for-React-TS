@@ -4,11 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  CreateUserDto,
-  RegisterUserDto,
-  VerifyCodeDto,
-} from './dto/create-user.dto';
+import { CreateUserDto, RegisterUserDto, VerifyCodeDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -17,20 +13,19 @@ import bcrypt from 'bcryptjs';
 import type { SoftDeleteModel } from 'mongoose-delete';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
-import { MailService } from '@/modules/mail/mail.service';
 import aqp from 'api-query-params';
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  ResetPasswordDto,
-} from './dto/password-user.dto';
+import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/password-user.dto';
 import { authTypeEnum, UserRoles } from '@/common/enums';
+import { getPaginationMeta, getPaginationParams } from '@/common/pagination/custom.meta';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { MAIL_JOB, MAIL_QUEUE } from '@/common/constants/queue.constant';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
-    private mailService: MailService,
+    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
   ) {}
 
   async getHashPassword(password: string) {
@@ -41,15 +36,28 @@ export class UsersService {
     return await bcrypt.compare(password, hash);
   }
 
+  private async addAuthMailJob(
+    jobName: string,
+    data: {
+      email: string;
+      fullName: string;
+      codeId: string;
+    },
+  ) {
+    try {
+      await this.mailQueue.add(jobName, data);
+    } catch (error) {
+      console.error(`[${jobName}] Add mail queue failed:`, error);
+    }
+  }
+
   async create(createUserDto: CreateUserDto, user: IUser) {
     // Check email exist
     const isExist = await this.userModel.findOne({
       email: createUserDto.email,
     });
     if (isExist) {
-      throw new BadRequestException(
-        'Email đã tồn tại, vui lòng sử dụng email khác',
-      );
+      throw new BadRequestException('Email đã tồn tại, vui lòng sử dụng email khác');
     }
     const { password, ...rest } = createUserDto;
     const hashPassword = await this.getHashPassword(password);
@@ -75,16 +83,17 @@ export class UsersService {
     delete filter.current;
     delete filter.pageSize;
 
-    const offset = (+currentPage - 1) * +limit;
-    const defaultLimit = +limit ? +limit : 10;
+    const { current, pageSize, skip } = getPaginationParams({
+      currentPage,
+      limit,
+    });
 
-    const totalItems = (await this.userModel.find(filter)).length;
-    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const totalItems = await this.userModel.countDocuments(filter);
 
     const result = await this.userModel
       .find(filter)
-      .skip(offset)
-      .limit(defaultLimit)
+      .skip(skip)
+      .limit(pageSize)
       .sort(sort as any)
       // .select([
       //   '-password',
@@ -100,13 +109,12 @@ export class UsersService {
       .exec();
 
     return {
-      meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages, //tổng số trang với điều kiện query
-        total: totalItems, // tổng số phần tử (số bản ghi)
-      },
-      result, //kết quả query
+      meta: getPaginationMeta({
+        current,
+        pageSize,
+        total: totalItems,
+      }),
+      result,
     };
   }
 
@@ -122,6 +130,40 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async getProfile(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return user;
+  }
+
+  async updateProfile(id: string, updateUserDto: UpdateUserDto) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      {
+        ...updateUserDto,
+      },
+      { returnDocument: 'after' },
+    );
+
+    if (!updatedUser) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return updatedUser;
   }
 
   async findByEmail(email: string) {
@@ -160,9 +202,7 @@ export class UsersService {
       user.email === 'user@gmail.com' ||
       user.email === 'guest@gmail.com'
     ) {
-      throw new BadRequestException(
-        'Định mệnh, xóa tài khoản này lấy gì mà test @@',
-      );
+      throw new BadRequestException('Định mệnh, xóa tài khoản này lấy gì mà test @@');
     }
 
     return await this.userModel.delete({ _id: id }, deletedBy);
@@ -174,9 +214,7 @@ export class UsersService {
     // Check email exist
     const isExist = await this.userModel.findOne({ email });
     if (isExist) {
-      throw new BadRequestException(
-        'Email đã tồn tại, vui lòng sử dụng email khác',
-      );
+      throw new BadRequestException('Email đã tồn tại, vui lòng sử dụng email khác');
     }
 
     // Hash password
@@ -194,19 +232,32 @@ export class UsersService {
     });
 
     // Send email
-    this.mailService
-      .sendVerificationEmail({
-        email: newRegister.email,
-        fullName: newRegister.fullName,
-        codeId: newRegister.codeId,
-      })
-      .catch((err) => console.error('Gửi mail không thành công:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_VERIFICATION_EMAIL, {
+      email: newRegister.email,
+      fullName: newRegister.fullName,
+      codeId: newRegister.codeId,
+    });
 
     // Trả ra phản hồi
     return {
       _id: newRegister._id,
       createdAt: newRegister.createdAt,
     };
+  }
+
+  async getAccount(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Not a valid ObjectId!');
+    }
+
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    return user;
   }
 
   updateUserToken = async (hashedRefreshToken: string | null, _id: string) => {
@@ -217,6 +268,14 @@ export class UsersService {
       },
     );
   };
+
+  async findById(_id: string) {
+    return this.userModel.findById(_id).lean();
+  }
+
+  async incrementTokenVersion(_id: string) {
+    return this.userModel.updateOne({ _id }, { $inc: { tokenVersion: 1 } });
+  }
 
   async activateAccount(verifyCodeDto: VerifyCodeDto) {
     const { _id, codeId } = verifyCodeDto;
@@ -232,17 +291,13 @@ export class UsersService {
     }
     // Kiểm tra code có đúng không
     if (user.codeId !== codeId) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // check code expire
     const isExpired = dayjs().isAfter(user.codeExpired);
     if (isExpired) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // Valid => update user
@@ -250,6 +305,8 @@ export class UsersService {
       { _id },
       {
         isActive: true,
+        codeId: null,
+        codeExpired: null,
       },
     );
 
@@ -271,19 +328,15 @@ export class UsersService {
     const newCode = uuidv4();
     const newExpired = dayjs().add(5, 'minutes').toDate();
 
-    await this.userModel.updateOne(
-      { email },
-      { codeId: newCode, codeExpired: newExpired },
-    );
+    await this.userModel.updateOne({ email }, { codeId: newCode, codeExpired: newExpired });
 
     // send email
-    this.mailService
-      .sendVerificationEmail({
-        email: user.email,
-        fullName: user.fullName,
-        codeId: newCode,
-      })
-      .catch((err) => console.error('Resend mail failed:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_VERIFICATION_EMAIL, {
+      email: user.email,
+      fullName: user.fullName,
+      codeId: newCode,
+    });
 
     return { _id: user._id };
   }
@@ -307,7 +360,12 @@ export class UsersService {
     const newHashedPassword = await this.getHashPassword(newPassword);
     await this.userModel.updateOne(
       { _id: user._id },
-      { password: newHashedPassword, passwordChangeAt: new Date() },
+      {
+        password: newHashedPassword,
+        passwordChangeAt: new Date(),
+        $inc: { tokenVersion: 1 },
+        hashedRefreshToken: null,
+      },
     );
     return 'ok';
   }
@@ -332,13 +390,12 @@ export class UsersService {
     );
 
     // send email
-    this.mailService
-      .sendResetPasswordEmail({
-        email: user.email,
-        fullName: user.fullName,
-        codeId: newCode,
-      })
-      .catch((err) => console.error('Resend mail failed:', err));
+    // Add mail job to queue
+    await this.addAuthMailJob(MAIL_JOB.SEND_RESET_PASSWORD, {
+      email: user.email,
+      fullName: user.fullName,
+      codeId: newCode,
+    });
 
     return { _id: user._id, email: user.email };
   }
@@ -348,9 +405,7 @@ export class UsersService {
 
     // Check confirm password
     if (confirmPassword !== newPassword) {
-      throw new BadRequestException(
-        'Mật khẩu/Xác nhận mật khẩu không chính xác.',
-      );
+      throw new BadRequestException('Mật khẩu/Xác nhận mật khẩu không chính xác.');
     }
 
     // Check mail
@@ -366,9 +421,7 @@ export class UsersService {
     const isNotExpired = dayjs().isBefore(user.passwordResetExpired);
 
     if (!isValidCode || !isNotExpired) {
-      throw new BadRequestException(
-        'Mã xác thực không hợp lệ hoặc đã hết hạn!',
-      );
+      throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn!');
     }
 
     // Update password
@@ -380,6 +433,8 @@ export class UsersService {
         passwordResetToken: null,
         passwordResetExpired: null,
         passwordChangeAt: new Date(),
+        $inc: { tokenVersion: 1 },
+        hashedRefreshToken: null,
       },
     );
 
