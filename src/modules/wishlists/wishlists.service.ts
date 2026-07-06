@@ -47,10 +47,10 @@ export class WishlistsService {
       throw new NotFoundException('Cuốn sách này không tồn tại hoặc đã bị xóa!');
     }
 
-    const updatedWishlist = await this.wishlistModel.findOneAndUpdate(
+    await this.wishlistModel.findOneAndUpdate(
       { userId },
       { $addToSet: { bookIds: new mongoose.Types.ObjectId(bookId) } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
 
     return this.getWishlist(userId);
@@ -64,7 +64,7 @@ export class WishlistsService {
     await this.wishlistModel.findOneAndUpdate(
       { userId },
       { $pull: { bookIds: new mongoose.Types.ObjectId(bookId) } },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     return this.getWishlist(userId);
