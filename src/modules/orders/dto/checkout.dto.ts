@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
+  IsDefined,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
@@ -43,6 +44,7 @@ export class CheckoutDto {
     type: ShippingAddressDto,
     description: 'Thông tin địa chỉ giao hàng',
   })
+  @IsDefined({ message: 'Địa chỉ giao hàng không được để trống' })
   @ValidateNested()
   @Type(() => ShippingAddressDto)
   shippingAddress: ShippingAddressDto;

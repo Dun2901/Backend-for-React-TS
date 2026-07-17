@@ -1,262 +1,118 @@
 # BookStore Backend
 
-Backend cho website bán sách, xây dựng bằng **NestJS**, **MongoDB**, **JWT**, **Google OAuth**, **VNPay Sandbox** và **Cloudinary**.
+Backend cho website bán sách, xây dựng bằng NestJS và TypeScript. Ứng dụng cung cấp REST API, Socket.IO gateway và BullMQ workers, sử dụng MongoDB cho dữ liệu nghiệp vụ và Redis cho cache/hàng đợi.
 
-## Công nghệ sử dụng
+## Công nghệ chính
 
-- NestJS
-- MongoDB + Mongoose
-- JWT Authentication
-- Google OAuth
-- Nodemailer
-- VNPay Sandbox
-- Cloudinary
-- TypeScript
+- NestJS 11, TypeScript và Mongoose
+- MongoDB, Redis, BullMQ và Keyv cache
+- JWT, Google OAuth và phân quyền theo role
+- Socket.IO notifications
+- Nodemailer, VNPay Sandbox, Cloudinary và Gemini
+- Swagger/OpenAPI
 
----
+## Tài liệu dự án
 
-## Cài đặt dự án
+| Tài liệu | Khi nào cần đọc |
+| --- | --- |
+| [Kiến trúc hệ thống](docs/ARCHITECTURE.md) | Hiểu module, request pipeline, auth, checkout, payment, realtime và các rủi ro hiện tại |
+| [API Guide](docs/API-GUIDE.md) | Tra route, quyền truy cập, request/response và contract với frontend |
+| [Lược đồ dữ liệu](docs/DATA-SCHEMA.md) | Thay đổi schema, transaction, index hoặc invariant nghiệp vụ |
+| [Chiến lược kiểm thử](docs/TESTING.md) | Chọn, viết và chạy unit, contract, HTTP smoke hoặc integration test |
+| [Điều hướng cho Codex](AGENTS.md) | Xác định tài liệu và source of truth cần đọc theo từng loại task |
+
+## Yêu cầu trước khi chạy
+
+- Node.js và pnpm 11.
+- MongoDB. Luồng checkout dùng transaction nhiều document, vì vậy cần MongoDB Atlas hoặc MongoDB local chạy replica set.
+- Redis cho cache và BullMQ.
+- Credential tương ứng nếu cần dùng Google OAuth, email, VNPay, Cloudinary hoặc Gemini.
+
+## Cài đặt và chạy local
 
 ```bash
 # 1. Clone project
 git clone https://github.com/Dun2901/Backend-for-React-TS.git
-
-# 2. Di chuyển vào thư mục dự án
 cd Backend-for-React-TS
 
-# 3. Cài dependencies
-npm install
+# 2. Cài dependencies theo pnpm-lock.yaml
+pnpm install --frozen-lockfile
 
-# 4. Tạo file môi trường
+# 3. Tạo file cấu hình
 cp .env.example .env
 
-# 5. Chạy dự án
-npm run dev
+# 4. Chạy development server
+pnpm dev
 ```
 
-Server mặc định chạy tại:
+Trên PowerShell, có thể tạo file môi trường bằng:
 
-```text
-http://localhost:8081
+```powershell
+Copy-Item .env.example .env
 ```
 
----
+Trước khi chạy, điền các giá trị còn trống trong `.env`. Tối thiểu cần kiểm tra MongoDB, Redis, JWT và các integration được nạp trong môi trường hiện tại. Không commit `.env`.
 
-## File `.env.example`
+Các URL mặc định:
 
-```env
-PORT=8081
-MONGODB_URL=
+| Thành phần | URL |
+| --- | --- |
+| Backend | `http://localhost:8081` |
+| API v1 | `http://localhost:8081/api/v1` |
+| Health check | `http://localhost:8081/api/v1/health` |
+| Swagger UI | `http://localhost:8081/swagger` |
+| Socket.IO notifications | `http://localhost:8081/notifications` |
 
-# JWT
-JWT_ACCESS_SECRET=
-JWT_ACCESS_EXPIRE=15m
+`CLIENT_URL` phải trùng origin thực tế của frontend để CORS, cookie và Google OAuth hoạt động đúng.
 
-JWT_REFRESH_SECRET=
-JWT_REFRESH_EXPIRE=7d
+## Cấu hình môi trường
 
-# Seed data
-SHOULD_INIT=true
-INIT_PASSWORD=123456
+`.env.example` là nguồn cấu hình mẫu duy nhất. Các nhóm biến chính:
 
-# Email
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=465
-MAIL_USER=
-MAIL_PASS=
+| Nhóm | Biến |
+| --- | --- |
+| Server | `PORT`, `CLIENT_URL`, `SERVER_URL` |
+| MongoDB và seed | `MONGODB_URL`, `SHOULD_INIT`, `INIT_PASSWORD` |
+| Redis | `REDIS_URL`, `REDIS_CACHE_TTL`, `REDIS_QUEUE_URL` |
+| JWT | `JWT_ACCESS_SECRET`, `JWT_ACCESS_EXPIRE`, `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRE` |
+| Email | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` |
+| Google OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_SECRET`, `GOOGLE_REDIRECT_URL` |
+| VNPay | `VNPAY_TMN_CODE`, `VNPAY_SECURE_SECRET`, `VNPAY_URL`, các callback URL |
+| Cloudinary | Cloud name/key/secret, media folders và cấu hình seed ảnh |
+| Chatbot | `GEMINI_API_KEY` |
 
-# Google OAuth
-GOOGLE_CLIENT_ID=
-GOOGLE_SECRET=
-GOOGLE_REDIRECT_URL=http://localhost:8081/api/v1/auth/google/redirect
+`SHOULD_INIT` mặc định là `false`. Chỉ bật sau khi đã cấu hình `INIT_PASSWORD` và nguồn ảnh seed. Seed ảnh hỗ trợ hai cách:
 
-# VNPay Sandbox
-VNPAY_TMN_CODE=
-VNPAY_SECURE_SECRET=
-VNPAY_URL=
-VNPAY_RETURN_URL=http://localhost:3000/payment/vnpay-return
-VNPAY_IPN_URL=http://localhost:8081/api/v1/payments/vnpay-ipn
-VNPAY_TEST_MODE=true
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-CLOUDINARY_AVATAR_FOLDER=bookstore/avatar
-CLOUDINARY_BOOK_FOLDER=bookstore/books
-CLOUDINARY_REVIEW_FOLDER=bookstore/reviews
-CLOUDINARY_ROOT_FOLDER=bookstore
-```
-
----
-
-## Giải thích biến môi trường quan trọng
-
-### Server
-
-| Biến          | Ý nghĩa                                |
-| ------------- | -------------------------------------- |
-| `PORT`        | Cổng chạy backend. Mặc định là `8081`. |
-| `MONGODB_URL` | Connection string để kết nối MongoDB.  |
-
-Ví dụ MongoDB local:
-
-```env
-MONGODB_URL=mongodb://localhost:27017/bookstore
-```
-
-Ví dụ MongoDB Atlas:
-
-```env
-MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/bookstore
-```
-
----
-
-### JWT
-
-| Biến                 | Ý nghĩa                                       |
-| -------------------- | --------------------------------------------- |
-| `JWT_ACCESS_SECRET`  | Secret dùng để ký access token.               |
-| `JWT_ACCESS_EXPIRE`  | Thời gian sống của access token, ví dụ `15m`. |
-| `JWT_REFRESH_SECRET` | Secret dùng để ký refresh token.              |
-| `JWT_REFRESH_EXPIRE` | Thời gian sống của refresh token, ví dụ `7d`. |
-
-Ví dụ:
-
-```env
-JWT_ACCESS_EXPIRE=15m
-JWT_REFRESH_EXPIRE=7d
-```
-
-Nên đặt `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` là chuỗi dài, khó đoán.
-
----
-
-### Seed data
-
-| Biến            | Ý nghĩa                                                 |
-| --------------- | ------------------------------------------------------- |
-| `SHOULD_INIT`   | `true` nếu muốn tự động tạo dữ liệu mẫu khi chạy dự án. |
-| `INIT_PASSWORD` | Mật khẩu mặc định cho các tài khoản được seed.          |
-
-Ví dụ:
-
-```env
-SHOULD_INIT=true
-INIT_PASSWORD=123456
-```
-
-Sau khi seed xong, có thể đổi:
-
-```env
-SHOULD_INIT=false
-```
-
-để tránh tạo lại dữ liệu mẫu.
-
----
-
-### Email
-
-| Biến        | Ý nghĩa                                 |
-| ----------- | --------------------------------------- |
-| `MAIL_HOST` | SMTP host dùng để gửi mail.             |
-| `MAIL_PORT` | SMTP port. Với Gmail thường dùng `465`. |
-| `MAIL_USER` | Email dùng để gửi mã xác thực.          |
-| `MAIL_PASS` | App Password của Gmail.                 |
-
-Nếu dùng Gmail, cần tạo **App Password**, không dùng mật khẩu đăng nhập Gmail thường.
-
-Ví dụ:
-
-```env
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=465
-MAIL_USER=your_email@gmail.com
-MAIL_PASS=your_app_password
-```
-
----
-
-### Google OAuth
-
-| Biến                  | Ý nghĩa                                             |
-| --------------------- | --------------------------------------------------- |
-| `GOOGLE_CLIENT_ID`    | Client ID lấy từ Google Cloud Console.              |
-| `GOOGLE_SECRET`       | Client Secret lấy từ Google Cloud Console.          |
-| `GOOGLE_REDIRECT_URL` | URL backend nhận callback sau khi đăng nhập Google. |
-
-Khi chạy local, thường để:
-
-```env
-GOOGLE_REDIRECT_URL=http://localhost:8081/api/v1/auth/google/redirect
-```
-
-URL này phải khớp với phần **Authorized redirect URIs** trong Google Cloud Console.
-
----
-
-### VNPay Sandbox
-
-| Biến                  | Ý nghĩa                                       |
-| --------------------- | --------------------------------------------- |
-| `VNPAY_TMN_CODE`      | Mã website do VNPay Sandbox cấp.              |
-| `VNPAY_SECURE_SECRET` | Secret key do VNPay Sandbox cấp.              |
-| `VNPAY_URL`           | URL thanh toán sandbox của VNPay.             |
-| `VNPAY_RETURN_URL`    | URL frontend nhận kết quả sau khi thanh toán. |
-| `VNPAY_IPN_URL`       | URL backend nhận IPN từ VNPay.                |
-| `VNPAY_TEST_MODE`     | `true` nếu đang dùng môi trường test.         |
-
-Ví dụ khi chạy local:
-
-```env
-VNPAY_RETURN_URL=http://localhost:3000/payment/vnpay-return
-VNPAY_IPN_URL=http://localhost:8081/api/v1/payments/vnpay-ipn
-VNPAY_TEST_MODE=true
-```
-
-Lưu ý: `VNPAY_RETURN_URL` là URL của frontend, còn `VNPAY_IPN_URL` là URL của backend.
-
----
-
-### Cloudinary
-
-| Biến                       | Ý nghĩa                                  |
-| -------------------------- | ---------------------------------------- |
-| `CLOUDINARY_CLOUD_NAME`    | Cloud name trong tài khoản Cloudinary.   |
-| `CLOUDINARY_API_KEY`       | API key của Cloudinary.                  |
-| `CLOUDINARY_API_SECRET`    | API secret của Cloudinary.               |
-| `CLOUDINARY_AVATAR_FOLDER` | Thư mục lưu ảnh avatar.                  |
-| `CLOUDINARY_BOOK_FOLDER`   | Thư mục lưu ảnh sách.                    |
-| `CLOUDINARY_REVIEW_FOLDER` | Thư mục lưu ảnh đánh giá.                |
-| `CLOUDINARY_ROOT_FOLDER`   | Thư mục gốc của project trên Cloudinary. |
-
-Ví dụ:
-
-```env
-CLOUDINARY_AVATAR_FOLDER=bookstore/avatar
-CLOUDINARY_BOOK_FOLDER=bookstore/books
-CLOUDINARY_REVIEW_FOLDER=bookstore/reviews
-CLOUDINARY_ROOT_FOLDER=bookstore
-```
-
----
-
-## Ghi chú khi chạy dự án
-
-- Đảm bảo MongoDB đang chạy hoặc `MONGODB_URL` đã trỏ đúng đến MongoDB Atlas.
-- Nếu dùng đăng nhập Google, cần cấu hình đúng `GOOGLE_REDIRECT_URL`.
-- Nếu dùng thanh toán VNPay, cần điền đầy đủ thông tin sandbox.
-- Nếu upload ảnh, cần cấu hình Cloudinary.
-- Không commit file `.env` lên GitHub.
-
----
+- `CLOUDINARY_SEED_IMAGE_ROOT`: đọc ảnh từ thư mục local.
+- `CLOUDINARY_SEED_BASE_URL`: dùng ảnh từ URL public.
 
 ## Scripts
 
-```bash
-# Chạy dev
-npm run dev
-```
+| Lệnh | Chức năng |
+| --- | --- |
+| `pnpm dev` | Chạy NestJS ở chế độ watch |
+| `pnpm build` | Build ứng dụng vào `dist/` |
+| `pnpm lint` | Chạy ESLint và tự sửa lỗi có thể sửa |
+| `pnpm format` | Format source/test bằng Prettier |
+| `pnpm test` | Chạy unit test |
+| `pnpm test:e2e` | Chạy e2e test |
+| `pnpm test:cov` | Chạy test và xuất coverage |
+
+## Kiểm thử
+
+Quy ước chi tiết, baseline hiện tại và kế hoạch integration test nằm trong [Chiến lược kiểm thử](docs/TESTING.md).
+
+- Unit/contract tests trong `src/**/*.spec.ts` chạy độc lập, không cần MongoDB, Redis hoặc credential dịch vụ ngoài.
+- HTTP smoke test trong `test/app.e2e-spec.ts` kiểm tra `GET /api/v1/health` và success envelope mà không khởi tạo các integration bên ngoài.
+- Khi sửa DTO, utility hoặc response contract, cập nhật test tương ứng trong cùng thay đổi.
+- Các service nghiệp vụ dùng MongoDB transaction vẫn cần integration test với database test chạy replica set.
+
+## Nguồn sự thật và trạng thái hiện tại
+
+- Route và quyền truy cập: controller/DTO trong `src/modules`.
+- Dữ liệu: `schemas/*.schema.ts`.
+- Nghiệp vụ và transaction: service của từng module.
+- Cấu hình toàn cục: `src/main.ts` và `src/app.module.ts`.
+- Các chênh lệch frontend/backend và giới hạn hiện tại được theo dõi trong [mục 11 của tài liệu kiến trúc](docs/ARCHITECTURE.md#11-các-điểm-lệch-và-rủi-ro-hiện-tại).
+
+Khi thay đổi API hoặc schema, cập nhật code frontend liên quan và tài liệu tương ứng trong cùng thay đổi.

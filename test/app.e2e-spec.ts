@@ -1,22 +1,45 @@
+/// <reference types="jest" />
+
+import { INestApplication, VersioningType } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { AppController } from '../src/app.controller';
+import { AppService } from '../src/app.service';
+import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 
-describe('AppController (e2e)', () => {
+describe('AppController HTTP smoke test', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      controllers: [AppController],
+      providers: [AppService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: ['1', '2'],
+    });
+    app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('GET /api/v1/health returns the standard success envelope', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/health')
+      .expect(200)
+      .expect({
+        statusCode: 200,
+        message: 'BookStore API đang hoạt động',
+        data: { status: 'ok' },
+      });
   });
 });
